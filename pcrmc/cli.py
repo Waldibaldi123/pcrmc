@@ -53,6 +53,28 @@ def get_contacter() -> pcrmc.Contacter:
         )
         raise typer.Exit(1)
 
+@app.command()
+def add(
+        name: List[str] = typer.Argument(...),
+        country: str = typer.Option("unknown", "--country", "-c"),
+        industry: str = typer.Option("unknown", "--industry", "-i")
+) -> None:
+    """Add a new contact with a name."""
+    contacter = get_contacter()
+    contact, error = contacter.add(name, country, industry)
+    if error:
+        typer.secho(
+                f'Adding contact failed with "{ERRORS[error]}"',
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+                f"""contact: "{contact['Name']}" was added """
+                f"""with country "{contact['Country']}" and """
+                f"""and industry "{contact['Industry']}".""",
+                fg=typer.colors.GREEN,
+        )
+
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f'{__app_name__} v{__version__}')

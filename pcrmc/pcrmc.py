@@ -17,7 +17,7 @@ class Contacter:
 
     def add(self, name: List[str], country: str, industry: str) -> CurrentContact:
         """Add a new contact to the database."""
-        # TODO: Change name type of List to str everywhere
+        # TODO: Either replace str with List[str] or keep str everywhere
         name_text = " ".join(name)
         contact = {
                 "Name": name_text,
