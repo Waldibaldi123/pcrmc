@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from typing import List, Optional
+from matplotlib.pyplot import get
 import typer
 from pcrmc import ERRORS, __app_name__, __version__, config, database, pcrmc
 
@@ -52,6 +53,87 @@ def get_contacter() -> pcrmc.Contacter:
                 fg=typer.colors.RED,
         )
         raise typer.Exit(1)
+
+@app.command()
+def add_contact(
+    name: List[str] = typer.Argument(...),
+    country: str = typer.Option(str(), "--country", "-c"),
+    industry: str = typer.Option(str(), "--industry", "-i")) -> None:
+    """Add a new to-do with a DESCRIPTION."""
+    contacter = get_contacter()
+    contact, error = contacter.add(name, country, industry,[])
+    
+    if error:
+        typer.secho(
+            f'Adding Contact failed with "{ERRORS[error]}"', fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"""pcrmc: "{contact['Name']}"("{contact['Country']}"/"{contact['Industry']}") was added """,
+            fg=typer.colors.GREEN,
+        )
+
+@app.command()
+def add_meeting(
+    participants: List[int] = typer.Argument(...),
+    date: str = typer.Option(str(), "--date", "-d"),
+    loc: str = typer.Option(str(), "--location", "-l"),
+    topics: List[str] = typer.Option(str([]), "--topics", "-t")) -> None:
+    """Add a new to-do with a DESCRIPTION."""
+    contacter = get_contacter()
+    meeting = pcrmc.generateMeeting(participants, date, loc, topics)
+    
+    part_names = [c["Name"] for c in contacter._db_handler.read_contacts().contact_list if c["ID"] in participants ]
+    
+    error = contacter.addMeeting(meeting)
+    
+    if error:
+        typer.secho(
+            f'Adding Meeting failed with "{ERRORS[error]}"', fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"""pcrmc: Meeting between {" and ".join(part_names)} at {loc} ({date}) was added """,
+            fg=typer.colors.GREEN,
+        )
+
+@app.command(name="list")
+def list_all() -> None:
+    """List all contacts."""
+    contacter = get_contacter()
+    contact_list = contacter.get_contacts()
+    if len(contact_list) == 0:
+        typer.secho(
+            "There are no contacts in the db", fg=typer.colors.RED
+        )
+        raise typer.Exit()
+
+    #TODO Darstellung optimieren.... Breite, Meetings?
+    typer.secho("\nContacts:\n", fg=typer.colors.BLUE, bold=True)
+    max_name_length = max([len(c["Name"]) for c in contact_list])
+    columns = (
+        "ID.  ",
+        f"| Name  {(max_name_length-4) * ' '}",
+        "| Country  ",
+        "| Industry  ",
+        "| Meetings  ",
+    )
+    headers = "".join(columns)
+    typer.secho(headers, fg=typer.colors.BLUE, bold=True)
+    typer.secho("-" * len(headers), fg=typer.colors.BLUE)
+    for contact in contact_list:
+        id, name, country, industry, meetings = contact.values()
+        typer.secho(
+            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
+            f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
+            f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}"
+            f"| {meetings}",
+            fg=typer.colors.BLUE,
+        )
+    typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
 def _version_callback(value: bool) -> None:
     if value:

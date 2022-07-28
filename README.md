@@ -1,7 +1,7 @@
 # Personal Contact Relationship Management Console
 ###  27.7.2022
 
-###Goals 
+### Goals 
 * Adressbuchfunktionen
 * Aufzeichnung von Treffen (inhaltlich, zeitlich, örtlich)
 * Überwachung und Erinnerung bzgl. der Zeitspannen zwischen Treffen (Farbkodierung)
