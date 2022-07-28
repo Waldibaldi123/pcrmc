@@ -11,11 +11,13 @@ DEFAULT_DB_FILE_PATH = Path.home().joinpath(
         "." + Path.home().stem + "_pcrmc.json"
 )
 
+
 def get_database_path(config_file: Path) -> Path:
     """Return the current path to the pcrmc database."""
     config_parser = configparser.ConfigParser()
     config_parser.read(config_file)
     return Path(config_parser["General"]["database"])
+
 
 def init_database(db_path: Path) -> int:
     """Create the pcrmc database."""
@@ -25,9 +27,11 @@ def init_database(db_path: Path) -> int:
     except OSError:
         return DB_WRITE_ERROR
 
+
 class DBResponse(NamedTuple):
     contact_list: List[Dict[str, Any]]
     error: int
+
 
 class DatabaseHandler:
     def __init__(self, db_path: Path) -> None:
@@ -44,7 +48,7 @@ class DatabaseHandler:
         except OSError:
             return DBResponse([], DB_READ_ERROR)
 
-    def write_contacts(self, contact_list: List[Dict[str,Any]]) -> DBResponse:
+    def write_contacts(self, contact_list: List[Dict[str, Any]]) -> DBResponse:
         # TODO: refactor with to path.read_text()
         try:
             with self._db_path.open("w") as db:
@@ -52,4 +56,3 @@ class DatabaseHandler:
             return DBResponse(contact_list, SUCCESS)
         except OSError:
             return DBResponse(contact_list, DB_WRITE_ERROR)
-

@@ -3,11 +3,11 @@
 
 from pathlib import Path
 from typing import List, Optional
-from matplotlib.pyplot import get
 import typer
 from pcrmc import ERRORS, __app_name__, __version__, config, database, pcrmc
 
 app = typer.Typer()
+
 
 @app.command()
 def init(
@@ -36,6 +36,7 @@ def init(
     else:
         typer.secho(f"The pcrmc database is {db_path}", fg=typer.colors.GREEN)
 
+
 def get_contacter() -> pcrmc.Contacter:
     if config.CONFIG_FILE_PATH.exists():
         db_path = database.get_database_path(config.CONFIG_FILE_PATH)
@@ -54,50 +55,59 @@ def get_contacter() -> pcrmc.Contacter:
         )
         raise typer.Exit(1)
 
+
 @app.command()
-def add_contact(
-    name: List[str] = typer.Argument(...),
-    country: str = typer.Option(str(), "--country", "-c"),
-    industry: str = typer.Option(str(), "--industry", "-i")) -> None:
+def add_contact(name: List[str] = typer.Argument(...),
+                country: str = typer.Option(str(), "--country", "-c"),
+                industry: str = typer.Option(str(), "--industry", "-i")
+                ) -> None:
     """Add a new to-do with a DESCRIPTION."""
     contacter = get_contacter()
-    contact, error = contacter.add(name, country, industry,[])
-    
+    contact, error = contacter.add(name, country, industry, [])
+
     if error:
         typer.secho(
-            f'Adding Contact failed with "{ERRORS[error]}"', fg=typer.colors.RED
+            f'Adding Contact failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
         )
         raise typer.Exit(1)
     else:
         typer.secho(
-            f"""pcrmc: "{contact['Name']}"("{contact['Country']}"/"{contact['Industry']}") was added """,
+            f"pcrmc: {contact['Name']} ({contact['Country']}"
+            f" / {contact['Industry']}) was added",
             fg=typer.colors.GREEN,
         )
 
+
 @app.command()
 def add_meeting(
-    participants: List[int] = typer.Argument(...),
-    date: str = typer.Option(str(), "--date", "-d"),
-    loc: str = typer.Option(str(), "--location", "-l"),
-    topics: List[str] = typer.Option(str([]), "--topics", "-t")) -> None:
+        participants: List[int] = typer.Argument(...),
+        date: str = typer.Option(str(), "--date", "-d"),
+        loc: str = typer.Option(str(), "--location", "-l"),
+        topics: List[str] = typer.Option(str([]), "--topics", "-t")) -> None:
     """Add a new to-do with a DESCRIPTION."""
     contacter = get_contacter()
     meeting = pcrmc.generateMeeting(participants, date, loc, topics)
-    
-    part_names = [c["Name"] for c in contacter._db_handler.read_contacts().contact_list if c["ID"] in participants ]
-    
+
+    part_names = [
+        c["Name"] for c in contacter._db_handler.read_contacts().contact_list
+        if c["ID"] in participants]
+
     error = contacter.addMeeting(meeting)
-    
+
     if error:
         typer.secho(
-            f'Adding Meeting failed with "{ERRORS[error]}"', fg=typer.colors.RED
+            f'Adding Meeting failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
         )
         raise typer.Exit(1)
     else:
         typer.secho(
-            f"""pcrmc: Meeting between {" and ".join(part_names)} at {loc} ({date}) was added """,
+            f'pcrmc: Meeting between {" and ".join(part_names)} '
+            f'at {loc} ({date}) was added',
             fg=typer.colors.GREEN,
         )
+
 
 @app.command(name="list")
 def list_all() -> None:
@@ -110,7 +120,7 @@ def list_all() -> None:
         )
         raise typer.Exit()
 
-    #TODO Darstellung optimieren.... Breite, Meetings?
+    # TODO: Darstellung optimieren.... Breite, Meetings?
     typer.secho("\nContacts:\n", fg=typer.colors.BLUE, bold=True)
     max_name_length = max([len(c["Name"]) for c in contact_list])
     columns = (
@@ -135,10 +145,12 @@ def list_all() -> None:
         )
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
+
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f'{__app_name__} v{__version__}')
         raise typer.Exit()
+
 
 @app.callback()
 def main(
@@ -152,4 +164,3 @@ def main(
         )
 ) -> None:
     return
-

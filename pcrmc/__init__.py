@@ -21,5 +21,3 @@ ERRORS = {
         DB_WRITE_ERROR: "database write error",
         ID_ERROR: "to-do id error",
 }
-
-
