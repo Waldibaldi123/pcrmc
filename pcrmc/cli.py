@@ -89,8 +89,16 @@ def add_meeting(
     contacter = get_contacter()
     meeting = pcrmc.generateMeeting(participants, date, loc, topics)
 
+    contacts = contacter.get_contacts()
+    if contacts.error:
+        typer.secho(
+            f'Adding Meeting failed with "{ERRORS[contacts.error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+
     part_names = [
-        c["Name"] for c in contacter._db_handler.read_contacts().data
+        c["Name"] for c in contacts.data
         if c["ID"] in participants]
 
     error = contacter.addMeeting(meeting)

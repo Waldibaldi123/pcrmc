@@ -30,7 +30,7 @@ class Contacter:
     def __init__(self, db_path: Path) -> None:
         self._db_handler = DatabaseHandler(db_path)
 
-    def addMeeting(self, meeting: Dict[str, Any]):
+    def addMeeting(self, meeting: Dict[str, Any]) -> int:
         """Add new meeting"""
         relevant_contacts = meeting["Participants"]
         read = self._db_handler.read_contacts()
@@ -66,7 +66,7 @@ class Contacter:
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
-    def get_contacts(self) -> List[Dict[str, Any]]:
+    def get_contacts(self) -> ContacterResponse:
         """Return the current to-do list."""
         contacts, error = self._db_handler.read_contacts()
         return ContacterResponse(contacts, error)
