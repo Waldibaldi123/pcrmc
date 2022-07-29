@@ -20,4 +20,5 @@ ERRORS = {
         DB_READ_ERROR: "database read error",
         DB_WRITE_ERROR: "database write error",
         ID_ERROR: "to-do id error",
+        JSON_ERROR: "json parsing error"
 }

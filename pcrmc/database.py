@@ -29,7 +29,7 @@ def init_database(db_path: Path) -> int:
 
 
 class DBResponse(NamedTuple):
-    contact_list: List[Dict[str, Any]]
+    data: Any
     error: int
 
 
@@ -38,21 +38,27 @@ class DatabaseHandler:
         self._db_path = db_path
 
     def read_contacts(self) -> DBResponse:
-        # TODO: refactor with to path.read_text()
         try:
-            with self._db_path.open("r") as db:
-                try:
-                    return DBResponse(json.load(db), SUCCESS)
-                except json.JSONDecoderError:
-                    return DBResponse([], JSON_ERROR)
+            contacts_json = json.loads(self._db_path.read_text())
+            return DBResponse(contacts_json, SUCCESS)
+        except json.JSONDecodeError:
+            return DBResponse([], JSON_ERROR)
         except OSError:
             return DBResponse([], DB_READ_ERROR)
 
     def write_contacts(self, contact_list: List[Dict[str, Any]]) -> DBResponse:
-        # TODO: refactor with to path.read_text()
         try:
-            with self._db_path.open("w") as db:
-                json.dump(contact_list, db, indent=4)
-            return DBResponse(contact_list, SUCCESS)
+            contact_str = json.dumps(contact_list, indent=4)
+            self._db_path.write_text(contact_str)
+            return DBResponse(contact_str, SUCCESS)
         except OSError:
             return DBResponse(contact_list, DB_WRITE_ERROR)
+
+    # see database_struct.json for database structure
+    # TODO: read all contact names and IDs
+    # TODO: read contact details given contact ID
+    # TODO: write specific contact details
+    # TODO: read all meeting titles, Dates and IDs
+    # TODO: read meeting details given meeting ID
+    # TODO: write meetings to append new meeting
+    # TODO: read contact names and IDs given detail field/value pair

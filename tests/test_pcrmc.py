@@ -40,6 +40,7 @@ test_data1 = {
             "Name": "Daniel Walder",
             "Country": "Austria",
             "Industry": "Software Engineering",
+            "Meetings": [],
         },
 }
 test_data2 = {
@@ -50,6 +51,7 @@ test_data2 = {
             "Name": "Roman Brock",
             "Country": "Austria",
             "Industry": "Medicine",
+            "Meetings": [],
         },
 }
 
@@ -75,4 +77,4 @@ def test_add(mock_json_file, name, country, industry, expected):
     contacter = pcrmc.Contacter(mock_json_file)
     assert contacter.add(name, country, industry) == expected
     read = contacter._db_handler.read_contacts()
-    assert len(read.contact_list) == 2
+    assert len(read.data) == 2

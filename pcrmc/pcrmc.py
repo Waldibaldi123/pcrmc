@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import DB_READ_ERROR
+from pcrmc import SUCCESS
 from pcrmc.database import DatabaseHandler
 
 
@@ -21,13 +21,12 @@ def generateMeeting(participants: List[int],
     return meeting
 
 
-class CurrentContact(NamedTuple):
-    contact: Dict[str, Any]
+class ContacterResponse(NamedTuple):
+    data: Any
     error: int
 
 
 class Contacter:
-    # TODO: rename to something better, maybe "Manager"
     def __init__(self, db_path: Path) -> None:
         self._db_handler = DatabaseHandler(db_path)
 
@@ -35,42 +34,39 @@ class Contacter:
         """Add new meeting"""
         relevant_contacts = meeting["Participants"]
         read = self._db_handler.read_contacts()
-        if read.error != 0:
+        if read.error != SUCCESS:
             return read.error
 
-        for c in read.contact_list:
+        for c in read.data:
             if c["ID"] in relevant_contacts:
                 c["Meetings"].append(meeting)
 
-        write = self._db_handler.write_contacts(read.contact_list)
+        write = self._db_handler.write_contacts(read.data)
         return write.error
 
     def add(self,
             name: List[str],
             country: str,
-            industry: str,
-            meetings: List[Dict[str, Any]]
-            ) -> CurrentContact:
+            industry: str
+            ) -> ContacterResponse:
         """Add a new contact to the database."""
         # TODO: Either replace str with List[str] or keep str everywhere
         name_text = " ".join(name)
         contact = {
-                "ID": -1,
                 "Name": name_text,
                 "Country": country,
                 "Industry": industry,
-                "Meetings": meetings}
+                "Meetings": []}
         read = self._db_handler.read_contacts()
-        # TODO: why specify DB_READ_ERROR, instead do != 0
-        if read.error == DB_READ_ERROR:
-            return CurrentContact(contact, read.error)
+        if read.error != SUCCESS:
+            return ContacterResponse(contact, read.error)
         # TODO: this breaks/duplicates an ID if we remove and then add a contact # noqa: E501
-        contact["ID"] = len(read.contact_list)
-        read.contact_list.append(contact)
-        write = self._db_handler.write_contacts(read.contact_list)
-        return CurrentContact(contact, write.error)
+        # contact["ID"] = len(read.contact_list)
+        read.data.append(contact)
+        write = self._db_handler.write_contacts(read.data)
+        return ContacterResponse(contact, write.error)
 
     def get_contacts(self) -> List[Dict[str, Any]]:
         """Return the current to-do list."""
-        read = self._db_handler.read_contacts()
-        return read.contact_list
+        contacts, error = self._db_handler.read_contacts()
+        return ContacterResponse(contacts, error)
