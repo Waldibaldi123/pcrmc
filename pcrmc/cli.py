@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 import typer
 from pcrmc import ERRORS, __app_name__, __version__, config, database, pcrmc
-
+from datetime import datetime, date
 app = typer.Typer()
 
 
@@ -194,13 +194,26 @@ def list_all() -> None:
         country = contact["Country"]
         industry = contact["Industry"]
         meetings = contact["Meetings"]
+        color = typer.colors.BLUE
+        if len(meetings) > 0:
+            last_meeting = (max([m["Date"] for m in meetings]))
+            days_since_meeting = abs((date.today()-datetime.strptime(
+                last_meeting, "%Y%m%d").date()).days)
+
+            if days_since_meeting < 10:
+                color = typer.colors.GREEN
+            elif days_since_meeting < 20:
+                color = typer.colors.YELLOW
+            elif days_since_meeting < 30:
+                color = typer.colors.RED
+
         typer.secho(
             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
             f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
             f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}"
             f"| {meetings}",
-            fg=typer.colors.BLUE,
+            fg=color,
         )
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
