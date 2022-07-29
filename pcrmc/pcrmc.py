@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import DB_READ_ERROR
+from pcrmc import config
 from pcrmc.database import DBResponse, DatabaseHandler
 
 
@@ -61,14 +61,25 @@ class Contacter:
                 "Industry": industry,
                 "Meetings": meetings}
         read = self._db_handler.read_contacts()
-        # TODO: why specify DB_READ_ERROR, instead do != 0
-        if read.error == DB_READ_ERROR:
+        if read.error != 0:
             return CurrentContact(contact, read.error)
-        # TODO: this breaks/duplicates an ID if we remove and then add a contact # noqa: E501
-        contact["ID"] = len(read.contact_list)
+
+        contact["ID"] = \
+            self._db_handler.get_new_contact_id(config.CONFIG_FILE_PATH)
         read.contact_list.append(contact)
         write = self._db_handler.write_contacts(read.contact_list)
         return CurrentContact(contact, write.error)
+
+    def modify(self, id: int, field: str, value: str) -> DBResponse:
+        read = self._db_handler.read_contacts()
+        if read.error != 0:
+            return read.error
+
+        for c in read.contact_list:
+            if c["ID"] == id:
+                c[field] = value
+        write = self._db_handler.write_contacts(read.contact_list)
+        return write
 
     def get_contacts(self) -> DBResponse:
         """Return the current to-do list."""

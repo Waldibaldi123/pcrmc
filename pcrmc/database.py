@@ -56,3 +56,15 @@ class DatabaseHandler:
             return DBResponse(contact_list, SUCCESS)
         except OSError:
             return DBResponse(contact_list, DB_WRITE_ERROR)
+
+    def get_new_contact_id(self, config_file: Path) -> int:
+        config_parser = configparser.ConfigParser()
+        config_parser.read(config_file)
+        id = int(config_parser["General"]["RunningID"])
+        config_parser["General"]["RunningID"] = str(id + 1)
+        try:
+            with config_file.open("w") as file:
+                config_parser.write(file)
+        except OSError:
+            return -1
+        return id

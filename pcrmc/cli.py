@@ -80,6 +80,28 @@ def add_contact(name: List[str] = typer.Argument(...),
 
 
 @app.command()
+def modify_contact(id: int = typer.Argument(...),
+                   field: str = typer.Option(str(), "--field", "-f"),
+                   value: str = typer.Option(str(), "--value", "-v")
+                   ) -> None:
+    """Modify contact by id."""
+    contacter = get_contacter()
+    _, error = contacter.modify(id, field, value)
+
+    if error:
+        typer.secho(
+            f'Adding Contact failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"pcrmc: Contact {id} modified",
+            fg=typer.colors.GREEN,
+        )
+
+
+@app.command()
 def add_meeting(
         participants: List[int] = typer.Argument(...),
         date: str = typer.Option(str(), "--date", "-d"),
