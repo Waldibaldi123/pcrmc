@@ -170,9 +170,13 @@ def list_all() -> None:
     typer.secho(headers, fg=typer.colors.BLUE, bold=True)
     typer.secho("-" * len(headers), fg=typer.colors.BLUE)
     for contact in contact_list:
-        name, country, industry, meetings = contact.values()
+        id = contact["ID"]
+        name = contact["Name"]
+        country = contact["Country"]
+        industry = contact["Industry"]
+        meetings = contact["Meetings"]
         typer.secho(
-            # f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
             f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
             f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}"

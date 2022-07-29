@@ -64,7 +64,7 @@ class Contacter:
         contact["ID"] = \
             self._db_handler.get_new_contact_id(config.CONFIG_FILE_PATH)
         read.data.append(contact)
-        write = self._db_handler.write_contacts(read.contact_list)
+        write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
     def modify(self, id: int, field: str, value: str) -> DBResponse:
@@ -72,10 +72,10 @@ class Contacter:
         if read.error != 0:
             return read.error
 
-        for c in read.contact_list:
+        for c in read.data:
             if c["ID"] == id:
                 c[field] = value
-        write = self._db_handler.write_contacts(read.contact_list)
+        write = self._db_handler.write_contacts(read.data)
         return write
 
     def get_contacts(self) -> ContacterResponse:
