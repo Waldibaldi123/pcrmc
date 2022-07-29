@@ -1,0 +1,24 @@
+{
+    "contact_file": [
+        {
+            "ID": 1,
+            "name": "Daniel Walder",
+            "country": "Austria",
+            "industry": "Software Engineering",
+            "meetingIDs": [
+                1, 3, 14
+            ]
+        }
+    ],
+    "meeting_file": [
+        {
+            "ID": 1,
+            "title": "Hiking with Roman",
+            "date": "Datetime",
+            "participantIDs": [
+                1, 2
+            ],
+            "desc": "String Max char size?"
+        }
+    ]
+}

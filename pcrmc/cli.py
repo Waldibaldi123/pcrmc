@@ -61,9 +61,9 @@ def add_contact(name: List[str] = typer.Argument(...),
                 country: str = typer.Option(str(), "--country", "-c"),
                 industry: str = typer.Option(str(), "--industry", "-i")
                 ) -> None:
-    """Add a new to-do with a DESCRIPTION."""
+    """Add a new contact with a NAME."""
     contacter = get_contacter()
-    contact, error = contacter.add(name, country, industry, [])
+    contact, error = contacter.add(name, country, industry)
 
     if error:
         typer.secho(
@@ -120,7 +120,7 @@ def add_meeting(
         raise typer.Exit(1)
 
     part_names = [
-        c["Name"] for c in contacts.contact_list
+        c["Name"] for c in contacts.data
         if c["ID"] in participants]
 
     error = contacter.addMeeting(meeting)
@@ -143,15 +143,13 @@ def add_meeting(
 def list_all() -> None:
     """List all contacts."""
     contacter = get_contacter()
-    contacts = contacter.get_contacts()
-    if contacts.error:
+    contact_list, error = contacter.get_contacts()
+    if error:
         typer.secho(
-            f'Listing contacts failed with "{ERRORS[contacts.error]}"',
+            f'Listing contacts failed with "{ERRORS[error]}"',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
-    contact_list = contacts.contact_list
-
     if len(contact_list) == 0:
         typer.secho(
             "There are no contacts in the db", fg=typer.colors.RED
@@ -172,9 +170,9 @@ def list_all() -> None:
     typer.secho(headers, fg=typer.colors.BLUE, bold=True)
     typer.secho("-" * len(headers), fg=typer.colors.BLUE)
     for contact in contact_list:
-        id, name, country, industry, meetings = contact.values()
+        name, country, industry, meetings = contact.values()
         typer.secho(
-            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            # f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
             f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
             f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}"
