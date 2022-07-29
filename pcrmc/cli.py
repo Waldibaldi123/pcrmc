@@ -89,8 +89,16 @@ def add_meeting(
     contacter = get_contacter()
     meeting = pcrmc.generateMeeting(participants, date, loc, topics)
 
+    contacts = contacter.get_contacts()
+    if contacts.error:
+        typer.secho(
+            f'Adding Meeting failed with "{ERRORS[contacts.error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+
     part_names = [
-        c["Name"] for c in contacter._db_handler.read_contacts().contact_list
+        c["Name"] for c in contacts.contact_list
         if c["ID"] in participants]
 
     error = contacter.addMeeting(meeting)
@@ -113,7 +121,15 @@ def add_meeting(
 def list_all() -> None:
     """List all contacts."""
     contacter = get_contacter()
-    contact_list = contacter.get_contacts()
+    contacts = contacter.get_contacts()
+    if contacts.error:
+        typer.secho(
+            f'Listing contacts failed with "{ERRORS[contacts.error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    contact_list = contacts.contact_list
+
     if len(contact_list) == 0:
         typer.secho(
             "There are no contacts in the db", fg=typer.colors.RED

@@ -2,3 +2,4 @@ venv/
 .vscode/
 tests.py
 __pycache__
+here.db

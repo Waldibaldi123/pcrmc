@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
 from pcrmc import DB_READ_ERROR
-from pcrmc.database import DatabaseHandler
+from pcrmc.database import DBResponse, DatabaseHandler
 
 
 # TODO: needs to be tested
@@ -31,7 +31,7 @@ class Contacter:
     def __init__(self, db_path: Path) -> None:
         self._db_handler = DatabaseHandler(db_path)
 
-    def addMeeting(self, meeting: Dict[str, Any]):
+    def addMeeting(self, meeting: Dict[str, Any]) -> int:
         """Add new meeting"""
         relevant_contacts = meeting["Participants"]
         read = self._db_handler.read_contacts()
@@ -70,7 +70,7 @@ class Contacter:
         write = self._db_handler.write_contacts(read.contact_list)
         return CurrentContact(contact, write.error)
 
-    def get_contacts(self) -> List[Dict[str, Any]]:
+    def get_contacts(self) -> DBResponse:
         """Return the current to-do list."""
         read = self._db_handler.read_contacts()
-        return read.contact_list
+        return read
