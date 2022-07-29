@@ -67,7 +67,7 @@ class Contacter:
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
-    def modify(self, id: int, field: str, value: str) -> DBResponse:
+    def modify_contact(self, id: int, field: str, value: str) -> DBResponse:
         read = self._db_handler.read_contacts()
         if read.error != 0:
             return read.error
@@ -76,6 +76,16 @@ class Contacter:
             if c["ID"] == id:
                 c[field] = value
         write = self._db_handler.write_contacts(read.data)
+        return write
+
+    def delete_contact(self, id: int) -> DBResponse:
+        read = self._db_handler.read_contacts()
+        if read.error != 0:
+            return read.error
+
+        new_contacts = [x for x in read.data if not x["ID"] == id]
+
+        write = self._db_handler.write_contacts(new_contacts)
         return write
 
     def get_contacts(self) -> ContacterResponse:

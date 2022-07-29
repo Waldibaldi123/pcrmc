@@ -86,17 +86,36 @@ def modify_contact(id: int = typer.Argument(...),
                    ) -> None:
     """Modify contact by id."""
     contacter = get_contacter()
-    _, error = contacter.modify(id, field, value)
+    _, error = contacter.modify_contact(id, field, value)
 
     if error:
         typer.secho(
-            f'Adding Contact failed with "{ERRORS[error]}"',
+            f'modify_contact failed with "{ERRORS[error]}"',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
     else:
         typer.secho(
             f"pcrmc: Contact {id} modified",
+            fg=typer.colors.GREEN,
+        )
+
+
+@app.command()
+def rm_contact(id: int = typer.Argument(...)) -> None:
+    """Delete contact by id."""
+    contacter = get_contacter()
+    _, error = contacter.delete_contact(id)
+
+    if error:
+        typer.secho(
+            f'Dm_contact failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"pcrmc: Contact {id} removed",
             fg=typer.colors.GREEN,
         )
 
