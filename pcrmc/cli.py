@@ -4,7 +4,8 @@
 from pathlib import Path
 from typing import List, Optional
 import typer
-from pcrmc import ERRORS, __app_name__, __version__, config, database, pcrmc
+from pcrmc import ERRORS, __app_name__, __version__, config, database,\
+    pcrmc, SUCCESS
 from datetime import datetime, date
 app = typer.Typer()
 
@@ -175,15 +176,14 @@ def list_all() -> None:
         )
         raise typer.Exit()
 
-    # TODO: Darstellung optimieren.... Breite, Meetings?
+    # TODO: Darstellung
     typer.secho("\nContacts:\n", fg=typer.colors.BLUE, bold=True)
     max_name_length = max([len(c["Name"]) for c in contact_list])
     columns = (
         "ID.  ",
         f"| Name  {(max_name_length-4) * ' '}",
         "| Country  ",
-        "| Industry  ",
-        "| Meetings  ",
+        "| Industry  "
     )
     headers = "".join(columns)
     typer.secho(headers, fg=typer.colors.BLUE, bold=True)
@@ -193,8 +193,14 @@ def list_all() -> None:
         name = contact["Name"]
         country = contact["Country"]
         industry = contact["Industry"]
-        meetings = contact["Meetings"]
+
         color = typer.colors.BLUE
+        meetings = []
+        response = contacter.get_meetings()
+        if response.error == SUCCESS:
+            meetings = response.data
+
+        meetings = [m for m in meetings if id in m["Participants"]]
         if len(meetings) > 0:
             last_meeting = (max([m["Date"] for m in meetings]))
             days_since_meeting = abs((date.today()-datetime.strptime(
@@ -211,8 +217,7 @@ def list_all() -> None:
             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
             f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
-            f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}"
-            f"| {meetings}",
+            f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}",
             fg=color,
         )
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)

@@ -14,6 +14,7 @@ def generateMeeting(participants: List[int],
                     topics: List[str]
                     ) -> Dict[str, Any]:
     meeting = {
+        "ID": -1,
         "Participants": participants,
         "Date": date, "Loc": loc,
         "Topics": topics
@@ -32,16 +33,15 @@ class Contacter:
 
     def addMeeting(self, meeting: Dict[str, Any]) -> int:
         """Add new meeting"""
-        relevant_contacts = meeting["Participants"]
-        read = self._db_handler.read_contacts()
-        if read.error != SUCCESS:
-            return read.error
+        response = self._db_handler.read_meetings()
+        if response.error != SUCCESS:
+            return ContacterResponse(response.data, response.error)
+        meeting["ID"] = \
+            self._db_handler.get_new_meeting_id(config.CONFIG_FILE_PATH)
 
-        for c in read.data:
-            if c["ID"] in relevant_contacts:
-                c["Meetings"].append(meeting)
+        response.data.append(meeting)
 
-        write = self._db_handler.write_contacts(read.data)
+        write = self._db_handler.write_meetings(response.data)
         return write.error
 
     def add(self,
@@ -55,8 +55,7 @@ class Contacter:
         contact = {
                 "Name": name_text,
                 "Country": country,
-                "Industry": industry,
-                "Meetings": []}
+                "Industry": industry}
         read = self._db_handler.read_contacts()
         if read.error != SUCCESS:
             return ContacterResponse(contact, read.error)
@@ -89,6 +88,11 @@ class Contacter:
         return ContacterResponse(write.data, write.error)
 
     def get_contacts(self) -> ContacterResponse:
-        """Return the current to-do list."""
+        """Return the current contact list."""
         contacts, error = self._db_handler.read_contacts()
         return ContacterResponse(contacts, error)
+
+    def get_meetings(self) -> ContacterResponse:
+        """Return the current meeting list."""
+        meetings, error = self._db_handler.read_meetings()
+        return ContacterResponse(meetings, error)
