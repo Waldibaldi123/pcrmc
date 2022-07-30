@@ -282,7 +282,7 @@ def list_meetings(
         "ID.  ",
         f"| Part.  {(max_name_length-5) * ' '}",
         "| Loc  ",
-        "| Date  ",
+        "| Date     ",
         "| Topics  "
     )
     headers = "".join(columns)
@@ -298,7 +298,7 @@ def list_meetings(
             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
             f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
-            f"| {date}{(len(columns[3]) - len(str(date))-1) * ' '}"
+            f"| {date}{(len(columns[3]) - len(str(date))-2) * ' '}"
             f"| {topics}{(len(columns[4]) - len(str(topics))-1) * ' '}",
             fg=typer.colors.BLUE
         )
