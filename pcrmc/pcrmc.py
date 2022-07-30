@@ -70,7 +70,7 @@ class Contacter:
                        value: str) -> ContacterResponse:
         read = self._db_handler.read_contacts()
         if read.error != 0:
-            return read.error
+            ContacterResponse(read.data, read.error)
 
         for c in read.data:
             if c["ID"] == id:
