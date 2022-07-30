@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
 from pcrmc import SUCCESS
-from pcrmc.database import DatabaseHandler
+from pcrmc.model.database import DatabaseHandler
 
 
 # TODO: needs to be tested

@@ -1,7 +1,8 @@
 """Pcrmc entry point script."""
 # pcrmc/__main__.py
 
-from pcrmc import cli, __app_name__
+from pcrmc import __app_name__
+from pcrmc.view import cli
 
 
 def main():

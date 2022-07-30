@@ -7,9 +7,9 @@ from pcrmc import (
         SUCCESS,
         __app_name__,
         __version__,
-        cli,
-        pcrmc,
 )
+from pcrmc.view import cli
+from pcrmc.controller import pcrmc
 
 runner = CliRunner()
 

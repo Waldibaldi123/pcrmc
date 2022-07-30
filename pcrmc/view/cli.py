@@ -4,7 +4,9 @@
 from pathlib import Path
 from typing import List, Optional
 import typer
-from pcrmc import ERRORS, __app_name__, __version__, config, database, pcrmc
+from pcrmc import ERRORS, __app_name__, __version__, config
+from pcrmc.controller import pcrmc
+from pcrmc.model import database
 
 app = typer.Typer()
 
