@@ -12,6 +12,7 @@ __version__ = "0.1.0"
         DB_WRITE_ERROR,
         JSON_ERROR,
         ID_ERROR,
+
 ) = range(7)
 
 ERRORS = {
@@ -19,6 +20,6 @@ ERRORS = {
         FILE_ERROR: "config file error",
         DB_READ_ERROR: "database read error",
         DB_WRITE_ERROR: "database write error",
+        JSON_ERROR: "json parsing error",
         ID_ERROR: "to-do id error",
-        JSON_ERROR: "json parsing error"
 }

@@ -41,8 +41,8 @@ class DatabaseHandler:
 
     def read_contacts(
         self,
-        field_name: str = None,
-        field_value: Any = None
+        identifier_name: str = None,
+        identifier_value: Any = None
     ) -> DBResponse:
         try:
             data = json.loads(self._db_path.read_text())
@@ -52,12 +52,12 @@ class DatabaseHandler:
         except OSError:
             return DBResponse([], DB_READ_ERROR)
 
-        if field_name is None or field_value is None:
+        if identifier_name is None or identifier_value is None:
             return DBResponse(read_contacts, SUCCESS)
 
         filtered_contacts = [c for c in read_contacts if
-                             field_name in c and
-                             c[field_name] == field_value]
+                             identifier_name in c and
+                             c[identifier_name] == identifier_value]
         return DBResponse(filtered_contacts, SUCCESS)
 
     def write_contacts(self, contact_list: List[Dict[str, Any]]) -> DBResponse:
@@ -72,8 +72,8 @@ class DatabaseHandler:
 
     def delete_contacts(
         self,
-        field_name: str = None,
-        field_value: Any = None
+        identifier_name: str = None,
+        identifier_value: Any = None
     ) -> DBResponse:
         """
         Deletes all contacts with field_name and field_vale
@@ -87,20 +87,53 @@ class DatabaseHandler:
         except OSError:
             return DBResponse([], DB_READ_ERROR)
 
-        if field_name is None or field_value is None:
+        if identifier_name is None or identifier_value is None:
             kept_contacts, error = self.write_contacts([])
             return DBResponse(read_contacts, error)
 
         # TODO: there has to be a better solution than these loops
         keep_contacts = [c for c in read_contacts if
-                         (field_name not in c) or
-                         (field_name in c and
-                          not c[field_name] == field_value)]
+                         (identifier_name not in c) or
+                         (identifier_name in c and
+                          not c[identifier_name] == identifier_value)]
         delete_contacts = [c for c in read_contacts if
-                           field_name in c and
-                           c[field_name] == field_value]
+                           identifier_name in c and
+                           c[identifier_name] == identifier_value]
         kept_contacts, error = self.write_contacts(keep_contacts)
         return DBResponse(delete_contacts, SUCCESS)
+
+    def update_contact(
+        self,
+        identifier_name: str,
+        identifier_value: Any,
+        field_name: str,
+        field_value: Any
+    ) -> DBResponse:
+        """
+        Updates all contacts matching identifier_name with identifier_value
+        with field_value at field_name, if field_name exists
+        """
+        try:
+            data = json.loads(self._db_path.read_text())
+            contacts = data["Contacts"]
+        except json.JSONDecodeError:
+            return DBResponse([], JSON_ERROR)
+        except OSError:
+            return DBResponse([], DB_READ_ERROR)
+
+        updated_contacts = []
+        for c in contacts:
+            if (identifier_name in c and
+                    c[identifier_name] == identifier_value):
+                if field_name in c:
+                    c[field_name] = field_value
+                    updated_contacts.append(c)
+
+        # TODO: should not write all at once, but one after the other
+        # TODO: this way write_contacts can return what was actually written
+        # TODO: but really not sure, because right now is more efficient
+        _, error = self.write_contacts(contacts)
+        return DBResponse(updated_contacts, error)
 
     def read_meetings(self) -> DBResponse:
         try:

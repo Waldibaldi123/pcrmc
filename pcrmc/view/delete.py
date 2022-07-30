@@ -13,23 +13,22 @@ app = typer.Typer()
 def contact(id: int):
     """Delete contact by id."""
     contacter = get_contacter()
-    deleted_contact, error = contacter.delete_contact(id)
+    deleted_contacts, error = contacter.delete_contact(id)
 
     if error:
         typer.secho(
-            f'Dm_contact failed with "{ERRORS[error]}"',
+            f'delete_contact failed with "{ERRORS[error]}"',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
-    elif len(deleted_contact) == 0:
+    elif len(deleted_contacts) == 0:
         typer.secho(
-                f'pcrmc: with id {id} not found',
+                f'pcrmc: contact with id {id} not found',
                 fg=typer.colors.GREEN,
             )
     else:
         # should only run once because ID is unique
-        # TODO: find a better solution or naming, like deleted_contacts
-        for contact in deleted_contact:
+        for contact in deleted_contacts:
             typer.secho(
                 f'pcrmc: Contact {contact["Name"]} '
                 f'with id {contact["ID"]} removed',

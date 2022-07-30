@@ -77,34 +77,37 @@ class Contacter:
             contacts, error = self._db_handler.read_contacts()
         elif identifier.isdigit():
             contacts, error = self._db_handler.read_contacts(
-                field_name="ID",
-                field_value=int(identifier)
+                identifier_name="ID",
+                identifier_value=int(identifier)
             )
         else:
             contacts, error = self._db_handler.read_contacts(
-                field_name="Name",
-                field_value=str(identifier)
+                identifier_name="Name",
+                identifier_value=str(identifier)
             )
         return ContacterResponse(contacts, error)
 
-    def modify_contact(self, id: int, field: str,
-                       value: str) -> ContacterResponse:
-        read = self._db_handler.read_contacts()
-        if read.error != 0:
-            return ContacterResponse(read.data, read.error)
+    def edit_contact(
+        self,
+        id: int,
+        field_name: str,
+        field_value: str
+    ) -> ContacterResponse:
 
-        for c in read.data:
-            if c["ID"] == id:
-                c[field] = value
-        write = self._db_handler.write_contacts(read.data)
-        return ContacterResponse(write.data, write.error)
+        edited_contacts, error = self._db_handler.update_contact(
+            identifier_name="ID",
+            identifier_value=id,
+            field_name=field_name,
+            field_value=field_value
+        )
+        return ContacterResponse(edited_contacts, error)
 
     def delete_contact(self, id: int) -> ContacterResponse:
-        deleted_contact, error = self._db_handler.delete_contacts(
-            field_name="ID",
-            field_value=id
+        deleted_contacts, error = self._db_handler.delete_contacts(
+            identifier_name="ID",
+            identifier_value=id
         )
-        return ContacterResponse(deleted_contact, error)
+        return ContacterResponse(deleted_contacts, error)
 
     def get_meetings(self) -> ContacterResponse:
         """Return the current meeting list."""
