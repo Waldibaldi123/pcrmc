@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
 from pcrmc import config, SUCCESS
-from pcrmc.database import DBResponse, DatabaseHandler
+from pcrmc.database import DatabaseHandler
 
 
 # TODO: needs to be tested
@@ -66,7 +66,8 @@ class Contacter:
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
-    def modify_contact(self, id: int, field: str, value: str) -> DBResponse:
+    def modify_contact(self, id: int, field: str,
+                       value: str) -> ContacterResponse:
         read = self._db_handler.read_contacts()
         if read.error != 0:
             return read.error
@@ -75,9 +76,9 @@ class Contacter:
             if c["ID"] == id:
                 c[field] = value
         write = self._db_handler.write_contacts(read.data)
-        return write
+        return ContacterResponse(write.data, write.error)
 
-    def delete_contact(self, id: int) -> DBResponse:
+    def delete_contact(self, id: int) -> ContacterResponse:
         read = self._db_handler.read_contacts()
         if read.error != 0:
             return ContacterResponse(read.data, read.error)
