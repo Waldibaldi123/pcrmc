@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import List, Optional
 import typer
+import json
 from pcrmc import ERRORS, __app_name__, __version__, config, database,\
     pcrmc, SUCCESS
 from datetime import datetime, date
@@ -87,17 +88,44 @@ def modify_contact(id: int = typer.Argument(...),
                    ) -> None:
     """Modify contact by id."""
     contacter = get_contacter()
-    _, error = contacter.modify_contact(id, field, value)
+    response = contacter.modify_contact(id, field, value)
 
-    if error:
+    if response.error:
         typer.secho(
-            f'modify_contact failed with "{ERRORS[error]}"',
+            f'modify_contact failed with "{ERRORS[response.error]}\n"',
+            # f'Debug: response \n"{json.dumps(response, indent=4)}"',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
     else:
         typer.secho(
             f"pcrmc: Contact {id} modified",
+            fg=typer.colors.GREEN,
+        )
+
+
+@app.command()
+def detail_contact(id: int = typer.Argument(...)) -> None:
+    """Modify contact by id."""
+    contacter = get_contacter()
+    contact_list, error = contacter.get_contacts()
+    contact = []
+
+    for c in contact_list:
+        if c["ID"] == id:
+            contact = c
+
+    contact_string = json.dumps(contact, indent=4)
+    if error:
+        typer.secho(
+            f'detail_contact failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"Contact Details\n"
+            f"{contact_string}",
             fg=typer.colors.GREEN,
         )
 
