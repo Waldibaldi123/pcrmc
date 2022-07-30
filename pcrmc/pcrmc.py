@@ -81,12 +81,12 @@ class Contacter:
     def delete_contact(self, id: int) -> DBResponse:
         read = self._db_handler.read_contacts()
         if read.error != 0:
-            return read.error
+            return ContacterResponse(read.data, read.error)
 
         new_contacts = [x for x in read.data if not x["ID"] == id]
 
         write = self._db_handler.write_contacts(new_contacts)
-        return write
+        return ContacterResponse(write.data, write.error)
 
     def get_contacts(self) -> ContacterResponse:
         """Return the current to-do list."""

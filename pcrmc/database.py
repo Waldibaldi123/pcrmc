@@ -5,7 +5,8 @@ import configparser
 import json
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR, SUCCESS
+from pcrmc import DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR,\
+     SUCCESS, FILE_ERROR
 
 DEFAULT_DB_FILE_PATH = Path.home().joinpath(
         "." + Path.home().stem + "_pcrmc.json"
@@ -57,13 +58,13 @@ class DatabaseHandler:
     def get_new_contact_id(self, config_file: Path) -> int:
         config_parser = configparser.ConfigParser()
         config_parser.read(config_file)
-        id = int(config_parser["General"]["RunningID"])
-        config_parser["General"]["RunningID"] = str(id + 1)
+        id = int(config_parser["General"]["NextID"])
+        config_parser["General"]["NextID"] = str(id + 1)
         try:
             with config_file.open("w") as file:
                 config_parser.write(file)
         except OSError:
-            return -1
+            return FILE_ERROR
         return id
     # see database_struct.json for database structure
     # TODO: read all contact names and IDs

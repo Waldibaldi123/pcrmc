@@ -105,11 +105,11 @@ def modify_contact(id: int = typer.Argument(...),
 def rm_contact(id: int = typer.Argument(...)) -> None:
     """Delete contact by id."""
     contacter = get_contacter()
-    _, error = contacter.delete_contact(id)
+    response = contacter.delete_contact(id)
 
-    if error:
+    if response.error:
         typer.secho(
-            f'Dm_contact failed with "{ERRORS[error]}"',
+            f'Dm_contact failed with "{ERRORS[response.error]}"',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
