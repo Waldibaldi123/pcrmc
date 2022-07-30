@@ -1,20 +1,14 @@
 """This module provides the pcrmc CLI"""
-# pcrmc/cli/cli.py
+# pcrmc/cli.py
 
 from pathlib import Path
 from typing import List, Optional
 import typer
-from pcrmc import config
-from pcrmc.controller.pcrmc import ERRORS, __app_name__, __version__
+from pcrmc import ERRORS, __app_name__, __version__, config
 from pcrmc.controller import pcrmc
 from pcrmc.model import database
-from pcrmc.view import create
 
 app = typer.Typer()
-app.add_typer(create.app, name="create")
-app.add_typer(edit.app, name="edit")
-app.add_typer(show.app, name="show")
-app.add_typer(delete.app, name="delete")
 
 
 @app.command()
@@ -62,8 +56,6 @@ def get_contacter() -> pcrmc.Contacter:
                 fg=typer.colors.RED,
         )
         raise typer.Exit(1)
-
-
 
 
 @app.command()
