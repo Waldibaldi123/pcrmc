@@ -40,9 +40,9 @@ class DatabaseHandler:
         self._db_path = db_path
 
     def read_contacts(
-            self,
-            field_name: str = None,
-            field_value: Any = None
+        self,
+        field_name: str = None,
+        field_value: Any = None
     ) -> DBResponse:
         try:
             data = json.loads(self._db_path.read_text())
@@ -69,6 +69,38 @@ class DatabaseHandler:
             return DBResponse(new_data_str, SUCCESS)
         except OSError:
             return DBResponse(contact_list, DB_WRITE_ERROR)
+
+    def delete_contacts(
+        self,
+        field_name: str = None,
+        field_value: Any = None
+    ) -> DBResponse:
+        """
+        Deletes all contacts with field_name and field_vale
+        Returns deteleted contacts
+        """
+        try:
+            data = json.loads(self._db_path.read_text())
+            read_contacts = data["Contacts"]
+        except json.JSONDecodeError:
+            return DBResponse([], JSON_ERROR)
+        except OSError:
+            return DBResponse([], DB_READ_ERROR)
+
+        if field_name is None or field_value is None:
+            kept_contacts, error = self.write_contacts([])
+            return DBResponse(read_contacts, error)
+
+        # TODO: there has to be a better solution than these loops
+        keep_contacts = [c for c in read_contacts if
+                         (field_name not in c) or
+                         (field_name in c and
+                          not c[field_name] == field_value)]
+        delete_contacts = [c for c in read_contacts if
+                           field_name in c and
+                           c[field_name] == field_value]
+        kept_contacts, error = self.write_contacts(keep_contacts)
+        return DBResponse(delete_contacts, SUCCESS)
 
     def read_meetings(self) -> DBResponse:
         try:
@@ -113,11 +145,3 @@ class DatabaseHandler:
         except OSError:
             return FILE_ERROR
         return id
-    # see database_struct.json for database structure
-    # TODO: read all contact names and IDs
-    # TODO: read contact details given contact ID
-    # TODO: write specific contact details
-    # TODO: read all meeting titles, Dates and IDs
-    # TODO: read meeting details given meeting ID
-    # TODO: write meetings to append new meeting
-    # TODO: read contact names and IDs given detail field/value pair

@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import SUCCESS
+from pcrmc import SUCCESS, config
 from pcrmc.model.database import DatabaseHandler
 
 
@@ -85,6 +85,8 @@ class Contacter:
                 field_name="Name",
                 field_value=str(identifier)
             )
+        return ContacterResponse(contacts, error)
+
     def modify_contact(self, id: int, field: str,
                        value: str) -> ContacterResponse:
         read = self._db_handler.read_contacts()
@@ -98,19 +100,11 @@ class Contacter:
         return ContacterResponse(write.data, write.error)
 
     def delete_contact(self, id: int) -> ContacterResponse:
-        read = self._db_handler.read_contacts()
-        if read.error != 0:
-            return ContacterResponse(read.data, read.error)
-
-        new_contacts = [x for x in read.data if not x["ID"] == id]
-
-        write = self._db_handler.write_contacts(new_contacts)
-        return ContacterResponse(write.data, write.error)
-
-    def get_contacts(self) -> ContacterResponse:
-        """Return the current contact list."""
-        contacts, error = self._db_handler.read_contacts()
-        return ContacterResponse(contacts, error)
+        deleted_contact, error = self._db_handler.delete_contacts(
+            field_name="ID",
+            field_value=id
+        )
+        return ContacterResponse(deleted_contact, error)
 
     def get_meetings(self) -> ContacterResponse:
         """Return the current meeting list."""
