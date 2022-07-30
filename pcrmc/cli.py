@@ -126,7 +126,7 @@ def add_meeting(
         participants: List[int] = typer.Argument(...),
         date: str = typer.Option(str(), "--date", "-d"),
         loc: str = typer.Option(str(), "--location", "-l"),
-        topics: List[str] = typer.Option(str([]), "--topics", "-t")) -> None:
+        topics: List[str] = typer.Option([], "--topics", "-t")) -> None:
     """Add a new to-do with a DESCRIPTION."""
     contacter = get_contacter()
     meeting = pcrmc.generateMeeting(participants, date, loc, topics)
@@ -159,8 +159,8 @@ def add_meeting(
         )
 
 
-@app.command(name="list")
-def list_all() -> None:
+@app.command()
+def list_contacts() -> None:
     """List all contacts."""
     contacter = get_contacter()
     contact_list, error = contacter.get_contacts()
@@ -195,10 +195,12 @@ def list_all() -> None:
         industry = contact["Industry"]
 
         color = typer.colors.BLUE
-        meetings = []
-        response = contacter.get_meetings()
-        if response.error == SUCCESS:
-            meetings = response.data
+        meetings, error = contacter.get_meetings()
+        if error != SUCCESS:
+            typer.secho(
+                "Error reading meetings", fg=typer.colors.RED
+            )
+            raise typer.Exit()
 
         meetings = [m for m in meetings if id in m["Participants"]]
         if len(meetings) > 0:
@@ -217,8 +219,88 @@ def list_all() -> None:
             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
             f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
             f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
-            f"| {industry}{(len(columns[2]) - len(str(industry))-1) * ' '}",
+            f"| {industry}{(len(columns[3]) - len(str(industry))-1) * ' '}",
             fg=color,
+        )
+    typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
+
+
+@app.command()
+def list_meetings(
+        participants: List[int] = typer.Option([], "--participants", "-p"),
+        date: str = typer.Option(str(), "--date", "-d"),
+        loc: str = typer.Option(str(), "--location", "-l"),
+        topics: List[str] = typer.Option([], "--topics", "-t")) -> None:
+
+    """List meetings."""
+    contacter = get_contacter()
+    contact_list, error = contacter.get_contacts()
+
+    if error:
+        typer.secho(
+            f'Getting contacts failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+    if len(contact_list) == 0:
+        typer.secho(
+            "There are no contacts in the db", fg=typer.colors.RED
+        )
+        raise typer.Exit()
+
+    meetings, error = contacter.get_meetings()
+    if error != SUCCESS:
+        typer.secho(
+            f'Getting meetings failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit()
+
+    if len(participants) > 0:
+        meetings = [m for m in meetings if
+                    all([p in m["Participants"] for p in participants])
+                    ]
+
+    if date:
+        meetings = [m for m in meetings if m["Date"] == date]
+    if loc:
+        meetings = [m for m in meetings if m["Loc"] == loc]
+
+    if len(meetings) == 0:
+        typer.secho(
+            "No meetings found.", fg=typer.colors.RED
+        )
+        raise typer.Exit()
+
+    if len(topics) > 0:
+        meetings = [m for m in meetings if
+                    all([t in m["Topics"] for t in topics])
+                    ]
+    typer.secho("Meetings:\n", fg=typer.colors.BLUE, bold=True)
+    max_name_length = max([len(c["Participants"]) for c in meetings])
+    columns = (
+        "ID.  ",
+        f"| Part.  {(max_name_length-5) * ' '}",
+        "| Loc  ",
+        "| Date  ",
+        "| Topics  "
+    )
+    headers = "".join(columns)
+    typer.secho(headers, fg=typer.colors.BLUE, bold=True)
+    typer.secho("-" * len(headers), fg=typer.colors.BLUE)
+    for meeting in meetings:
+        id = meeting["ID"]
+        part = meeting["Participants"]
+        loc = meeting["Loc"]
+        date = meeting["Date"]
+        topics = meeting["Topics"]
+        typer.secho(
+            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
+            f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
+            f"| {date}{(len(columns[3]) - len(str(date))-1) * ' '}"
+            f"| {topics}{(len(columns[4]) - len(str(topics))-1) * ' '}",
+            fg=typer.colors.BLUE
         )
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
