@@ -37,14 +37,25 @@ class DatabaseHandler:
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
-    def read_contacts(self) -> DBResponse:
+    def read_contacts(
+            self,
+            field_name: str = None,
+            field_value: Any = None
+    ) -> DBResponse:
         try:
-            contacts_json = json.loads(self._db_path.read_text())
-            return DBResponse(contacts_json, SUCCESS)
+            read_contacts = json.loads(self._db_path.read_text())
         except json.JSONDecodeError:
             return DBResponse([], JSON_ERROR)
         except OSError:
             return DBResponse([], DB_READ_ERROR)
+
+        if field_name is None or field_value is None:
+            return DBResponse(read_contacts, SUCCESS)
+
+        filtered_contacts = [c for c in read_contacts if
+                             field_name in c and
+                             c[field_name] == field_value]
+        return DBResponse(filtered_contacts, SUCCESS)
 
     def write_contacts(self, contact_list: List[Dict[str, Any]]) -> DBResponse:
         try:

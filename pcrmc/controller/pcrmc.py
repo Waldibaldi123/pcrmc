@@ -44,29 +44,43 @@ class Contacter:
         write = self._db_handler.write_contacts(read.data)
         return write.error
 
-    def add(self,
+    def add_contact(
+            self,
             name: List[str],
             country: str,
             industry: str
-            ) -> ContacterResponse:
+    ) -> ContacterResponse:
         """Add a new contact to the database."""
-        # TODO: Either replace str with List[str] or keep str everywhere
-        name_text = " ".join(name)
         contact = {
-                "Name": name_text,
+                "Name": name,
                 "Country": country,
                 "Industry": industry,
                 "Meetings": []}
         read = self._db_handler.read_contacts()
         if read.error != SUCCESS:
             return ContacterResponse(contact, read.error)
-        # TODO: this breaks/duplicates an ID if we remove and then add a contact # noqa: E501
-        # contact["ID"] = len(read.contact_list)
         read.data.append(contact)
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
-    def get_contacts(self) -> ContacterResponse:
-        """Return the current to-do list."""
-        contacts, error = self._db_handler.read_contacts()
+    def get_contacts(
+            self,
+            identifier: str = None
+    ) -> ContacterResponse:
+        """
+        Returns contacts that match identifier (ID or name)
+        Returns all contacts if no identifier is given
+        """
+        if identifier is None:
+            contacts, error = self._db_handler.read_contacts()
+        elif identifier.isdigit():
+            contacts, error = self._db_handler.read_contacts(
+                field_name="ID",
+                field_value=int(identifier)
+            )
+        else:
+            contacts, error = self._db_handler.read_contacts(
+                field_name="Name",
+                field_value=str(identifier)
+            )
         return ContacterResponse(contacts, error)
