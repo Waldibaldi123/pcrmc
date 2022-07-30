@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import SUCCESS
+from pcrmc import config, SUCCESS
 from pcrmc.database import DatabaseHandler
 
 
@@ -14,6 +14,7 @@ def generateMeeting(participants: List[int],
                     topics: List[str]
                     ) -> Dict[str, Any]:
     meeting = {
+        "ID": -1,
         "Participants": participants,
         "Date": date, "Loc": loc,
         "Topics": topics
@@ -32,16 +33,15 @@ class Contacter:
 
     def addMeeting(self, meeting: Dict[str, Any]) -> int:
         """Add new meeting"""
-        relevant_contacts = meeting["Participants"]
-        read = self._db_handler.read_contacts()
-        if read.error != SUCCESS:
-            return read.error
+        response = self._db_handler.read_meetings()
+        if response.error != SUCCESS:
+            return ContacterResponse(response.data, response.error)
+        meeting["ID"] = \
+            self._db_handler.get_new_meeting_id(config.CONFIG_FILE_PATH)
 
-        for c in read.data:
-            if c["ID"] in relevant_contacts:
-                c["Meetings"].append(meeting)
+        response.data.append(meeting)
 
-        write = self._db_handler.write_contacts(read.data)
+        write = self._db_handler.write_meetings(response.data)
         return write.error
 
     def add(self,
@@ -55,18 +55,45 @@ class Contacter:
         contact = {
                 "Name": name_text,
                 "Country": country,
-                "Industry": industry,
-                "Meetings": []}
+                "Industry": industry}
         read = self._db_handler.read_contacts()
         if read.error != SUCCESS:
             return ContacterResponse(contact, read.error)
-        # TODO: this breaks/duplicates an ID if we remove and then add a contact # noqa: E501
-        # contact["ID"] = len(read.contact_list)
+
+        contact["ID"] = \
+            self._db_handler.get_new_contact_id(config.CONFIG_FILE_PATH)
         read.data.append(contact)
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
 
+    def modify_contact(self, id: int, field: str,
+                       value: str) -> ContacterResponse:
+        read = self._db_handler.read_contacts()
+        if read.error != 0:
+            return ContacterResponse(read.data, read.error)
+
+        for c in read.data:
+            if c["ID"] == id:
+                c[field] = value
+        write = self._db_handler.write_contacts(read.data)
+        return ContacterResponse(write.data, write.error)
+
+    def delete_contact(self, id: int) -> ContacterResponse:
+        read = self._db_handler.read_contacts()
+        if read.error != 0:
+            return ContacterResponse(read.data, read.error)
+
+        new_contacts = [x for x in read.data if not x["ID"] == id]
+
+        write = self._db_handler.write_contacts(new_contacts)
+        return ContacterResponse(write.data, write.error)
+
     def get_contacts(self) -> ContacterResponse:
-        """Return the current to-do list."""
+        """Return the current contact list."""
         contacts, error = self._db_handler.read_contacts()
         return ContacterResponse(contacts, error)
+
+    def get_meetings(self) -> ContacterResponse:
+        """Return the current meeting list."""
+        meetings, error = self._db_handler.read_meetings()
+        return ContacterResponse(meetings, error)

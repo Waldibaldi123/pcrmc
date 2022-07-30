@@ -3,16 +3,16 @@
 import json
 import pytest
 from typer.testing import CliRunner
+from pathlib import Path
 from pcrmc import (
         SUCCESS,
         __app_name__,
         __version__,
         cli,
         pcrmc,
+        config
 )
-
 runner = CliRunner()
-
 
 def test_version():
     result = runner.invoke(cli.app, ["--version"])
@@ -22,10 +22,14 @@ def test_version():
 
 @pytest.fixture
 def mock_json_file(tmp_path):
-    contact = [{
-        "Name": "Daniel Walder",
-        "Country": "Austria",
-        "Industry": "Software Engineering"}]
+    contact = {"Contacts": [
+        {
+            "Name": "Daniel Walder",
+            "Country": "Austria",
+            "Industry": "Software Engineering"
+        }],
+        "Meetings": []
+        }
     db_file = tmp_path / "contact.json"
     with db_file.open("w") as db:
         json.dump(contact, db, indent=4)
@@ -33,6 +37,7 @@ def mock_json_file(tmp_path):
 
 
 test_data1 = {
+        "ID": 24,
         "name": ["Daniel Walder"],
         "country": "Austria",
         "industry": "Software Engineering",
@@ -40,10 +45,11 @@ test_data1 = {
             "Name": "Daniel Walder",
             "Country": "Austria",
             "Industry": "Software Engineering",
-            "Meetings": [],
-        },
+
+        }
 }
 test_data2 = {
+        "ID": 25,
         "name": ["Roman Brock"],
         "country": "Austria",
         "industry": "Medicine",
@@ -51,8 +57,8 @@ test_data2 = {
             "Name": "Roman Brock",
             "Country": "Austria",
             "Industry": "Medicine",
-            "Meetings": [],
-        },
+
+        }
 }
 
 
@@ -73,8 +79,10 @@ test_data2 = {
             ),
         ],
 )
+@patch('pcrmc.config.CONFIG_FILE_PATH', mock_config_file)
 def test_add(mock_json_file, name, country, industry, expected):
     contacter = pcrmc.Contacter(mock_json_file)
-    assert contacter.add(name, country, industry) == expected
+    ret, error = contacter.add(name, country, industry) 
+    assert (ret, error) == expected
     read = contacter._db_handler.read_contacts()
     assert len(read.data) == 2
