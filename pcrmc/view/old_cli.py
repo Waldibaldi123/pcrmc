@@ -15,7 +15,7 @@ app = typer.Typer()
 @app.command()
 def init(
         db_path: str = typer.Option(
-            str(database.DEFAULT_DB_FILE_PATH),
+            str(database.DEFAULT_DB_DIR_PATH),
             "--db-path",
             "-db",
             prompt="pcrmc database location?",

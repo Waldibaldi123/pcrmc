@@ -1,19 +1,36 @@
 """This module provides the PCRMC database functionality"""
 # pcrmc/database.py
-# TODO: put meetings and contacts in separate files
 # TODO: generalize functions to take meeting or contact parameter
 #       so function knows which file to modify
+
+# new database.py structure idea:
+# _read(table: str) -> DBResponse
+# _write(table: str, data: Any) -> DBResponse
+# read(table: str, optional filters) -> DBResponse
+# create(table: str, data: Any) -> DBResponse
+# update(table: str, filters) -> DBResponse
+# delete(table: str, filters) -> DBResponse
+
+# controller utilizes above functions
+# and is less abstract (eg get_all_contacts() instead of read())
+# if eg multiple tables need to be compared, we could write
+# another database function or handle it in the controller
+
 
 import configparser
 import json
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
 from pcrmc import DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR,\
-     SUCCESS, FILE_ERROR
+    SUCCESS, FILE_ERROR
 
-DEFAULT_DB_FILE_PATH = Path.home().joinpath(
-        "." + Path.home().stem + "_pcrmc.json"
+DEFAULT_DB_DIR_PATH = Path.home().joinpath(
+        "." + Path.home().stem + "_pcrmc_db"
 )
+DB_FILE_NAMES = [
+    "contacts.json",
+    "meetings.json"
+]
 
 
 def get_database_path(config_file: Path) -> Path:
@@ -26,11 +43,21 @@ def get_database_path(config_file: Path) -> Path:
 def init_database(db_path: Path) -> int:
     """Create the pcrmc database."""
     try:
-        empty = {'Contacts': [], 'Meetings': []}
-        db_path.write_text(json.dumps(empty, indent=4))
-        return SUCCESS
+        db_path.mkdir(exist_ok=True)
     except OSError:
-        return DB_WRITE_ERROR
+        return FILE_ERROR
+    for db_file_name in DB_FILE_NAMES:
+        try:
+            db_file_path = db_path / db_file_name
+            db_file_path.touch(exist_ok=True)
+        except OSError:
+            return FILE_ERROR
+        try:
+            empty = []
+            db_file_path.write_text(json.dumps(empty, indent=4))
+        except OSError:
+            return DB_WRITE_ERROR
+    return SUCCESS
 
 
 class DBResponse(NamedTuple):

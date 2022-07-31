@@ -39,13 +39,16 @@ class Contacter:
     ) -> ContacterResponse:
         """Add a new contact to the database."""
         contact = {
-                "Name": name,
-                "Country": country,
-                "Industry": industry}
+            "Name": name,
+            "Country": country,
+            "Industry": industry
+        }
+        # TODO: use _db_handler.read("contacts") instead
         read = self._db_handler.read_contacts()
         if read.error != SUCCESS:
             return ContacterResponse(contact, read.error)
 
+        # TODO: create and use _db_handler.create()
         contact["ID"] = \
             self._db_handler._get_new_contact_id(config.CONFIG_FILE_PATH)
         read.data.append(contact)
