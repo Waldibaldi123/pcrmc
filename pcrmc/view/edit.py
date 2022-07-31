@@ -12,13 +12,13 @@ app = typer.Typer()
 @app.command()
 def contact(
     id: int,
-    field_name: str = typer.Option(..., "--field", "-f"),
-    field_value: str = typer.Option(..., "--value", "-v")
+    field: str = typer.Option(..., "--field", "-f"),
+    value: str = typer.Option(..., "--value", "-v")
 ) -> None:
     """Edit contact by id."""
     contacter = get_contacter()
     edited_contacts, error = contacter.edit_contact(
-        id, field_name, field_value)
+        id, field, value)
 
     if error:
         typer.secho(
@@ -41,8 +41,8 @@ def contact(
             typer.secho(
                 f'pcrmc: Contact {contact["Name"]} '
                 f'with id {contact["ID"]} got edited:\n'
-                f'"{field_name}" now has '
-                f'value "{contact[field_name]}"',
+                f'"{field}" now has '
+                f'value "{contact[field]}"',
                 fg=typer.colors.GREEN,
             )
 

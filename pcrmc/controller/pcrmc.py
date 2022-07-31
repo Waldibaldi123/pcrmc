@@ -3,11 +3,10 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple
-from pcrmc import SUCCESS, config
 from pcrmc.model.database import DatabaseHandler
 
 
-# TODO: needs to be tested
+# TODO: needs to be moved
 def generateMeeting(participants: List[int],
                     date: str,
                     loc: str,
@@ -43,17 +42,8 @@ class Contacter:
             "Country": country,
             "Industry": industry
         }
-        # TODO: use _db_handler.read("contacts") instead
-        read = self._db_handler.read_contacts()
-        if read.error != SUCCESS:
-            return ContacterResponse(contact, read.error)
-
-        # TODO: create and use _db_handler.create()
-        contact["ID"] = \
-            self._db_handler._get_new_contact_id(config.CONFIG_FILE_PATH)
-        read.data.append(contact)
-        write = self._db_handler.write_contacts(read.data)
-        return ContacterResponse(contact, write.error)
+        inserted_contact, error = self._db_handler.insert("contact", contact)
+        return ContacterResponse(inserted_contact, error)
 
     def get_contacts(
             self,
@@ -65,14 +55,16 @@ class Contacter:
         """
         # TODO: be able to filter for multiple identifiers
         if identifier is None:
-            contacts, error = self._db_handler.read_contacts()
+            contacts, error = self._db_handler.read("contact")
         elif identifier.isdigit():
-            contacts, error = self._db_handler.read_contacts(
+            contacts, error = self._db_handler.read(
+                "contact",
                 identifier_name="ID",
                 identifier_value=int(identifier)
             )
         else:
-            contacts, error = self._db_handler.read_contacts(
+            contacts, error = self._db_handler.read(
+                "contact",
                 identifier_name="Name",
                 identifier_value=str(identifier)
             )
@@ -81,39 +73,23 @@ class Contacter:
     def edit_contact(
         self,
         id: int,
-        field_name: str,
-        field_value: str
+        field: str,
+        value: str
     ) -> ContacterResponse:
 
-        edited_contacts, error = self._db_handler.update_contact(
-            identifier_name="ID",
+        edited_contacts, error = self._db_handler.update(
+            "contact",
+            identifier_field="ID",
             identifier_value=id,
-            field_name=field_name,
-            field_value=field_value
+            update_field=field,
+            update_value=value
         )
         return ContacterResponse(edited_contacts, error)
 
     def delete_contact(self, id: int) -> ContacterResponse:
-        deleted_contacts, error = self._db_handler.delete_contacts(
-            identifier_name="ID",
+        deleted_contacts, error = self._db_handler.delete(
+            "contact",
+            identifier_field="ID",
             identifier_value=id
         )
         return ContacterResponse(deleted_contacts, error)
-
-    def addMeeting(self, meeting: Dict[str, Any]) -> int:
-        """Add new meeting"""
-        response = self._db_handler.read_meetings()
-        if response.error != SUCCESS:
-            return ContacterResponse(response.data, response.error)
-        meeting["ID"] = \
-            self._db_handler.get_new_meeting_id(config.CONFIG_FILE_PATH)
-
-        response.data.append(meeting)
-
-        write = self._db_handler.write_meetings(response.data)
-        return write.error
-
-    def get_meetings(self) -> ContacterResponse:
-        """Return the current meeting list."""
-        meetings, error = self._db_handler.read_meetings()
-        return ContacterResponse(meetings, error)

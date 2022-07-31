@@ -48,7 +48,9 @@ def show_contact(identifier_list: List[str] = typer.Argument(None)):
         industry = contact["Industry"]
 
         color = typer.colors.BLUE
-        meetings, error = contacter.get_meetings()
+        # TODO
+        # meetings, error = contacter.get_meetings()
+        meetings, error = ([], SUCCESS)
         if error != SUCCESS:
             typer.secho(
                 "Error reading meetings", fg=typer.colors.RED

@@ -1,21 +1,5 @@
 """This module provides the PCRMC database functionality"""
 # pcrmc/database.py
-# TODO: generalize functions to take meeting or contact parameter
-#       so function knows which file to modify
-
-# new database.py structure idea:
-# _read(table: str) -> DBResponse
-# _write(table: str, data: Any) -> DBResponse
-# read(table: str, optional filters) -> DBResponse
-# insert(table: str, data: Any) -> DBResponse
-# update(table: str, filters) -> DBResponse
-# delete(table: str, filters) -> DBResponse
-
-# controller utilizes above functions
-# and is less abstract (eg get_all_contacts() instead of read())
-# if eg multiple tables need to be compared, we could write
-# another database function or handle it in the controller
-
 
 import configparser
 import json
@@ -81,7 +65,7 @@ class DatabaseHandler:
         config_parser = configparser.ConfigParser()
         config_parser.read(config.CONFIG_FILE_PATH)
 
-        next_id_name = DB_NEXT_ID_NAMES["table"]
+        next_id_name = DB_NEXT_ID_NAMES[table]
         id = int(config_parser["General"][next_id_name])
         config_parser["General"][next_id_name] = str(id + 1)
         try:
@@ -138,17 +122,20 @@ class DatabaseHandler:
         table: str,
         data: dict
     ) -> DBResponse:
-        """Insert data into table"""
+        """
+        Insert data into table
+        Returns inserted data
+        """
         read_data, error = self._read(table)
         if error:
             return DBResponse(data, error)
 
         data["ID"] = self._get_id_for_new_entry(table)
         read_data.append(data)
-        write_data, error = self._write(table, read_data)
-        return DBResponse(write_data, error)
+        _, error = self._write(table, read_data)
+        return DBResponse(data, error)
 
-    def update_contact(
+    def update(
         self,
         table: str,
         identifier_field: str,
@@ -176,7 +163,7 @@ class DatabaseHandler:
         _, error = self._write(table, read_data)
         return DBResponse(updated_entries, error)
 
-    def delete_contacts(
+    def delete(
         self,
         table: str,
         identifier_field: str = None,
