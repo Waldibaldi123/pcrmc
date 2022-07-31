@@ -31,19 +31,6 @@ class Contacter:
     def __init__(self, db_path: Path) -> None:
         self._db_handler = DatabaseHandler(db_path)
 
-    def addMeeting(self, meeting: Dict[str, Any]) -> int:
-        """Add new meeting"""
-        response = self._db_handler.read_meetings()
-        if response.error != SUCCESS:
-            return ContacterResponse(response.data, response.error)
-        meeting["ID"] = \
-            self._db_handler.get_new_meeting_id(config.CONFIG_FILE_PATH)
-
-        response.data.append(meeting)
-
-        write = self._db_handler.write_meetings(response.data)
-        return write.error
-
     def add_contact(
             self,
             name: List[str],
@@ -60,7 +47,7 @@ class Contacter:
             return ContacterResponse(contact, read.error)
 
         contact["ID"] = \
-            self._db_handler.get_new_contact_id(config.CONFIG_FILE_PATH)
+            self._db_handler._get_new_contact_id(config.CONFIG_FILE_PATH)
         read.data.append(contact)
         write = self._db_handler.write_contacts(read.data)
         return ContacterResponse(contact, write.error)
@@ -73,6 +60,7 @@ class Contacter:
         Returns contacts that match identifier (ID or name)
         Returns all contacts if no identifier is given
         """
+        # TODO: be able to filter for multiple identifiers
         if identifier is None:
             contacts, error = self._db_handler.read_contacts()
         elif identifier.isdigit():
@@ -108,6 +96,19 @@ class Contacter:
             identifier_value=id
         )
         return ContacterResponse(deleted_contacts, error)
+
+    def addMeeting(self, meeting: Dict[str, Any]) -> int:
+        """Add new meeting"""
+        response = self._db_handler.read_meetings()
+        if response.error != SUCCESS:
+            return ContacterResponse(response.data, response.error)
+        meeting["ID"] = \
+            self._db_handler.get_new_meeting_id(config.CONFIG_FILE_PATH)
+
+        response.data.append(meeting)
+
+        write = self._db_handler.write_meetings(response.data)
+        return write.error
 
     def get_meetings(self) -> ContacterResponse:
         """Return the current meeting list."""

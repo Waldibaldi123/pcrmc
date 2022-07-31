@@ -1,5 +1,8 @@
 """This module provides the PCRMC database functionality"""
 # pcrmc/database.py
+# TODO: put meetings and contacts in separate files
+# TODO: generalize functions to take meeting or contact parameter
+#       so function knows which file to modify
 
 import configparser
 import json
@@ -46,21 +49,31 @@ class DatabaseHandler:
     ) -> DBResponse:
         try:
             data = json.loads(self._db_path.read_text())
-            read_contacts = data["Contacts"]
+            contacts = data["Contacts"]
         except json.JSONDecodeError:
             return DBResponse([], JSON_ERROR)
         except OSError:
             return DBResponse([], DB_READ_ERROR)
 
         if identifier_name is None or identifier_value is None:
-            return DBResponse(read_contacts, SUCCESS)
+            return DBResponse(contacts, SUCCESS)
 
-        filtered_contacts = [c for c in read_contacts if
+        filtered_contacts = [c for c in contacts if
                              identifier_name in c and
                              c[identifier_name] == identifier_value]
         return DBResponse(filtered_contacts, SUCCESS)
 
+    def create_contact(
+        self,
+        contact: dict
+    ) -> DBResponse:
+        contacts, error = self.read_contacts()
+        if error:
+            return DBResponse(contacts, error)
+        raise NotImplementedError
+
     def write_contacts(self, contact_list: List[Dict[str, Any]]) -> DBResponse:
+        # TODO: refactor once other functions are generalized
         try:
             data = json.loads(self._db_path.read_text())
             data["Contacts"] = contact_list
@@ -79,24 +92,20 @@ class DatabaseHandler:
         Deletes all contacts with field_name and field_vale
         Returns deteleted contacts
         """
-        try:
-            data = json.loads(self._db_path.read_text())
-            read_contacts = data["Contacts"]
-        except json.JSONDecodeError:
-            return DBResponse([], JSON_ERROR)
-        except OSError:
-            return DBResponse([], DB_READ_ERROR)
+        contacts, error = self.read_contacts()
+        if error:
+            return DBResponse(contacts, error)
 
         if identifier_name is None or identifier_value is None:
             kept_contacts, error = self.write_contacts([])
-            return DBResponse(read_contacts, error)
+            return DBResponse(contacts, error)
 
         # TODO: there has to be a better solution than these loops
-        keep_contacts = [c for c in read_contacts if
+        keep_contacts = [c for c in contacts if
                          (identifier_name not in c) or
                          (identifier_name in c and
                           not c[identifier_name] == identifier_value)]
-        delete_contacts = [c for c in read_contacts if
+        delete_contacts = [c for c in contacts if
                            identifier_name in c and
                            c[identifier_name] == identifier_value]
         kept_contacts, error = self.write_contacts(keep_contacts)
@@ -113,13 +122,9 @@ class DatabaseHandler:
         Updates all contacts matching identifier_name with identifier_value
         with field_value at field_name, if field_name exists
         """
-        try:
-            data = json.loads(self._db_path.read_text())
-            contacts = data["Contacts"]
-        except json.JSONDecodeError:
-            return DBResponse([], JSON_ERROR)
-        except OSError:
-            return DBResponse([], DB_READ_ERROR)
+        contacts, error = self.read_contacts()
+        if error:
+            return DBResponse(contacts, error)
 
         updated_contacts = []
         for c in contacts:
@@ -155,7 +160,7 @@ class DatabaseHandler:
         except OSError:
             return DBResponse(meeting_list, DB_WRITE_ERROR)
 
-    def get_new_contact_id(self, config_file: Path) -> int:
+    def _get_new_contact_id(self, config_file: Path) -> int:
         config_parser = configparser.ConfigParser()
         config_parser.read(config_file)
         id = int(config_parser["General"]["NextCID"])
