@@ -12,8 +12,9 @@ __version__ = "0.1.0"
         DB_WRITE_ERROR,
         JSON_ERROR,
         ID_ERROR,
-
-) = range(7)
+        NOT_FOUND_ERROR,
+        DUPLICATE_ERROR
+) = range(9)
 
 ERRORS = {
         DIR_ERROR: "config directory error",
@@ -21,5 +22,7 @@ ERRORS = {
         DB_READ_ERROR: "database read error",
         DB_WRITE_ERROR: "database write error",
         JSON_ERROR: "json parsing error",
-        ID_ERROR: "to-do id error",
+        ID_ERROR: "id error",
+        NOT_FOUND_ERROR: "not found",
+        DUPLICATE_ERROR: "found more than once"
 }

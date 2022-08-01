@@ -36,9 +36,42 @@ def add_contact(
         )
 
 
+# TODO: allow multiple participants
 @app.command("meeting")
-def add_meeting(title: List[str]):
-    print(f"Creating meeting: {title}")
+def add_meeting(
+    contact: List[str] = typer.Argument(...),
+    title: List[str] = typer.Option(..., "--title", '-t', prompt="title?"),
+    date: str = typer.Option(str(), "--date", "-d", prompt="date?"),
+    loc: str = typer.Option(str(), "--location", "-l",  prompt="location?"),
+    topics: List[str] = typer.Option([], "--topics", "-t",  prompt="topics?")
+) -> None:
+    """Add a new meeting with a CONTACT (name or id)."""
+    contact = "".join(contact)
+    title = "".join(title)
+    print(contact)
+    print(title)
+
+    contacter = get_contacter()
+    meeting, error = contacter.add_meeting(
+        contact_identifier=contact,
+        title=title,
+        date=date,
+        loc=loc,
+        topics=topics
+    )
+
+    if error:
+        typer.secho(
+            f'Adding Meeting failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+
+    typer.secho(
+        f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
+        f'at {loc} ({date}) was added',
+        fg=typer.colors.GREEN,
+    )
 
 
 if __name__ == "__main__":

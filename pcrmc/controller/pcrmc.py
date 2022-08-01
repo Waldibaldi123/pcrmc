@@ -2,23 +2,9 @@
 # pcrmc/pcrmc.py
 
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, List, NamedTuple
+from pcrmc import DUPLICATE_ERROR, NOT_FOUND_ERROR, SUCCESS
 from pcrmc.model.database import DatabaseHandler
-
-
-# TODO: needs to be moved
-def generateMeeting(participants: List[int],
-                    date: str,
-                    loc: str,
-                    topics: List[str]
-                    ) -> Dict[str, Any]:
-    meeting = {
-        "ID": -1,
-        "Participants": participants,
-        "Date": date, "Loc": loc,
-        "Topics": topics
-        }
-    return meeting
 
 
 class ContacterResponse(NamedTuple):
@@ -30,13 +16,41 @@ class Contacter:
     def __init__(self, db_path: Path) -> None:
         self._db_handler = DatabaseHandler(db_path)
 
+    def _get_contact_name_from_id(self, id: int) -> ContacterResponse:
+        matched_contacts, error = self._db_handler.read(
+            "contact",
+            identifier_field="ID",
+            identifier_value=id
+        )
+        if error:
+            return ContacterResponse(str(), error)
+        if len(matched_contacts) == 0:
+            return ContacterResponse(matched_contacts, NOT_FOUND_ERROR)
+        elif len(matched_contacts) > 1:
+            return ContacterResponse(matched_contacts, DUPLICATE_ERROR)
+        return ContacterResponse(matched_contacts[0]["Name"], SUCCESS)
+
+    def _get_contact_id_from_name(self, name: str) -> ContacterResponse:
+        matched_contacts, error = self._db_handler.read(
+            "contact",
+            identifier_field="Name",
+            identifier_value=name
+        )
+        if error:
+            return ContacterResponse(str(), error)
+        if len(matched_contacts) == 0:
+            return ContacterResponse(matched_contacts, NOT_FOUND_ERROR)
+        elif len(matched_contacts) > 1:
+            # TODO: allow for duplicate names
+            return ContacterResponse(matched_contacts, DUPLICATE_ERROR)
+        return ContacterResponse(matched_contacts[0]["ID"], SUCCESS)
+
     def add_contact(
-            self,
-            name: List[str],
-            country: str,
-            industry: str
+        self,
+        name: List[str],
+        country: str,
+        industry: str
     ) -> ContacterResponse:
-        """Add a new contact to the database."""
         contact = {
             "Name": name,
             "Country": country,
@@ -45,14 +59,38 @@ class Contacter:
         inserted_contact, error = self._db_handler.insert("contact", contact)
         return ContacterResponse(inserted_contact, error)
 
+    def add_meeting(
+        self,
+        contact_identifier: str,
+        title: str,
+        date: str,
+        loc: str,
+        topics: List[str]
+    ) -> ContacterResponse:
+        if contact_identifier.isdigit():
+            contact_id = contact_identifier
+            contact_name, error = self._get_contact_name_from_id(contact_id)
+        else:
+            contact_name = contact_identifier
+            contact_id, error = self._get_contact_id_from_name(contact_name)
+        if error:
+            return(str(), error)
+
+        meeting = {
+            "ContactName": contact_name,
+            "ContactID": contact_id,
+            "Title": title,
+            "Date": date,
+            "Loc": loc,
+            "Topics": topics
+        }
+        inserted_meeting, error = self._db_handler.insert("meeting", meeting)
+        return ContacterResponse(inserted_meeting, error)
+
     def get_contacts(
             self,
             identifier: str = None
     ) -> ContacterResponse:
-        """
-        Returns contacts that match identifier (ID or name)
-        Returns all contacts if no identifier is given
-        """
         # TODO: be able to filter for multiple identifiers
         if identifier is None:
             contacts, error = self._db_handler.read("contact")
@@ -70,13 +108,33 @@ class Contacter:
             )
         return ContacterResponse(contacts, error)
 
+    def get_meetings(
+            self,
+            identifier: str = None
+    ) -> ContacterResponse:
+        # TODO: be able to filter for multiple identifiers
+        if identifier is None:
+            meetings, error = self._db_handler.read("meeting")
+        elif identifier.isdigit():
+            meetings, error = self._db_handler.read(
+                "meeting",
+                identifier_name="ID",
+                identifier_value=int(identifier)
+            )
+        else:
+            meetings, error = self._db_handler.read(
+                "meeting",
+                identifier_name="Title",
+                identifier_value=str(identifier)
+            )
+        return ContacterResponse(meetings, error)
+
     def edit_contact(
         self,
         id: int,
         field: str,
         value: str
     ) -> ContacterResponse:
-
         edited_contacts, error = self._db_handler.update(
             "contact",
             identifier_field="ID",
@@ -86,6 +144,21 @@ class Contacter:
         )
         return ContacterResponse(edited_contacts, error)
 
+    def edit_meeting(
+        self,
+        id: int,
+        field: str,
+        value: str
+    ) -> ContacterResponse:
+        edited_meetings, error = self._db_handler.update(
+            "meeting",
+            identifier_field="ID",
+            identifier_value=id,
+            update_field=field,
+            update_value=value
+        )
+        return ContacterResponse(edited_meetings, error)
+
     def delete_contact(self, id: int) -> ContacterResponse:
         deleted_contacts, error = self._db_handler.delete(
             "contact",
@@ -93,3 +166,11 @@ class Contacter:
             identifier_value=id
         )
         return ContacterResponse(deleted_contacts, error)
+
+    def delete_meeting(self, id: int) -> ContacterResponse:
+        deleted_meeting, error = self._db_handler.delete(
+            "meeting",
+            identifier_field="ID",
+            identifier_value=id
+        )
+        return ContacterResponse(deleted_meeting, error)
