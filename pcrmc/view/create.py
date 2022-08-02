@@ -16,7 +16,6 @@ def add_contact(
         industry: str = typer.Option(str(), "--industry", "-i")
 ) -> None:
     """Add a new contact with a NAME."""
-    # TODO: figure out how List[str] acts if used more than once
     name = " ".join(name_list)
 
     contacter = get_contacter()
@@ -48,8 +47,6 @@ def add_meeting(
     """Add a new meeting with a CONTACT (name or id)."""
     contact = "".join(contact)
     title = "".join(title)
-    print(contact)
-    print(title)
 
     contacter = get_contacter()
     meeting, error = contacter.add_meeting(

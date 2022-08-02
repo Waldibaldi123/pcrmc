@@ -47,7 +47,7 @@ class Contacter:
 
     def add_contact(
         self,
-        name: List[str],
+        name: str,
         country: str,
         industry: str
     ) -> ContacterResponse:
@@ -89,23 +89,29 @@ class Contacter:
 
     def get_contacts(
             self,
-            identifier: str = None
+            name: str = None,
+            country: str = None,
+            industry: str = None,
+            id: int = None
     ) -> ContacterResponse:
-        # TODO: be able to filter for multiple identifiers
-        if identifier is None:
-            contacts, error = self._db_handler.read("contact")
-        elif identifier.isdigit():
-            contacts, error = self._db_handler.read(
-                "contact",
-                identifier_name="ID",
-                identifier_value=int(identifier)
-            )
-        else:
-            contacts, error = self._db_handler.read(
-                "contact",
-                identifier_name="Name",
-                identifier_value=str(identifier)
-            )
+        contact_filter = {
+            "Name": name,
+            "Country": country,
+            "Industry": industry,
+            "ID": id
+        }
+        filter_fields = []
+        filter_values = []
+        for field in contact_filter:
+            if contact_filter[field]:
+                filter_fields.append(field)
+                filter_values.append(contact_filter[field])
+
+        contacts, error = self._db_handler.read(
+            "contact",
+            filter_fields=filter_fields,
+            filter_values=filter_values
+        )
         return ContacterResponse(contacts, error)
 
     def get_meetings(

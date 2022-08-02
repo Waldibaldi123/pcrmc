@@ -13,8 +13,9 @@ __version__ = "0.1.0"
         JSON_ERROR,
         ID_ERROR,
         NOT_FOUND_ERROR,
-        DUPLICATE_ERROR
-) = range(9)
+        DUPLICATE_ERROR,
+        BAD_INPUT_ERROR
+) = range(10)
 
 ERRORS = {
         DIR_ERROR: "config directory error",
@@ -23,6 +24,7 @@ ERRORS = {
         DB_WRITE_ERROR: "database write error",
         JSON_ERROR: "json parsing error",
         ID_ERROR: "id error",
-        NOT_FOUND_ERROR: "not found",
-        DUPLICATE_ERROR: "found more than once"
+        NOT_FOUND_ERROR: "not found error",
+        DUPLICATE_ERROR: "duplicate error",
+        BAD_INPUT_ERROR: "bad input error"
 }

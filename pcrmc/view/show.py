@@ -11,12 +11,18 @@ app = typer.Typer()
 
 
 @app.command("contact")
-def show_contact(identifier_list: List[str] = typer.Argument(None)):
-    identifier = None
-    if identifier_list:
-        identifier = " ".join(identifier_list)
+def show_contact(
+    name: List[str] = typer.Argument(None),
+    country: str = typer.Option(str(), "--country", "-c"),
+    industry: str = typer.Option(str(), "--industry"),
+    id: int = typer.Option(None, "--id", "-i")
+) -> None:
+    if name:
+        name = " ".join(name)
+
     contacter = get_contacter()
-    contact_list, error = contacter.get_contacts(identifier)
+    contact_list, error = contacter.get_contacts(
+        name, country, industry, id)
     if error:
         typer.secho(
             f'Listing contacts failed with "{ERRORS[error]}"',
@@ -80,9 +86,105 @@ def show_contact(identifier_list: List[str] = typer.Argument(None)):
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
 
-@app.command()
-def meeting(identifier: List[str]):
-    print(f"Showing meeting: {identifier}")
+# TODO: fat todo
+# @app.command("meeting")
+# def show_meetings(
+#     identifier: List[str] = typer.Argument(None)
+# ) -> None:
+
+#     """List meetings."""
+#     if identifier:
+#         identifier = " ".join(identifier)
+#     contacter = get_contacter()
+#     meetings, error = contacter.get_meetings(identifier)
+#     if error:
+#         typer.secho(
+#             f'Listing meetings failed with "{ERRORS[error]}"',
+#             fg=typer.colors.RED
+#         )
+#         raise typer.Exit(1)
+#     if len(meetings) == 0 and identifier is None:
+#         typer.secho(
+#             "There are no meetings in the db",
+#             fg=typer.colors.RED
+#         )
+#         raise typer.Exit()
+#     elif len(meetings) == 0:
+#         typer.secho(
+#             f'There are no meetings in the db given identifer {identifier}',
+#             fg=typer.colors.RED
+#         )
+#         raise typer.Exit()
+#     contacter = get_contacter()
+#     contact_list, error = contacter.get_contacts()
+
+#     if error:
+#         typer.secho(
+#             f'Getting contacts failed with "{ERRORS[error]}"',
+#             fg=typer.colors.RED
+#         )
+#         raise typer.Exit(1)
+#     if len(contact_list) == 0:
+#         typer.secho(
+#             "There are no contacts in the db", fg=typer.colors.RED
+#         )
+#         raise typer.Exit()
+
+#     meetings, error = contacter.get_meetings()
+#     if error != SUCCESS:
+#         typer.secho(
+#             f'Getting meetings failed with "{ERRORS[error]}"',
+#             fg=typer.colors.RED
+#         )
+#         raise typer.Exit()
+
+#     if len(participants) > 0:
+#         meetings = [m for m in meetings if
+#                     all([p in m["Participants"] for p in participants])
+#                     ]
+
+#     if date:
+#         meetings = [m for m in meetings if m["Date"] == date]
+#     if loc:
+#         meetings = [m for m in meetings if m["Loc"] == loc]
+
+#     if len(meetings) == 0:
+#         typer.secho(
+#             "No meetings found.", fg=typer.colors.RED
+#         )
+#         raise typer.Exit()
+
+#     if len(topics) > 0:
+#         meetings = [m for m in meetings if
+#                     all([t in m["Topics"] for t in topics])
+#                     ]
+#     typer.secho("Meetings:\n", fg=typer.colors.BLUE, bold=True)
+#     max_name_length = max([len(c["Participants"]) for c in meetings])
+#     columns = (
+#         "ID.  ",
+#         f"| Part.  {(max_name_length-5) * ' '}",
+#         "| Loc  ",
+#         "| Date     ",
+#         "| Topics  "
+#     )
+#     headers = "".join(columns)
+#     typer.secho(headers, fg=typer.colors.BLUE, bold=True)
+#     typer.secho("-" * len(headers), fg=typer.colors.BLUE)
+#     for meeting in meetings:
+#         id = meeting["ID"]
+#         part = meeting["Participants"]
+#         loc = meeting["Loc"]
+#         date = meeting["Date"]
+#         topics = meeting["Topics"]
+#         typer.secho(
+#             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+#             f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
+#             f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
+#             f"| {date}{(len(columns[3]) - len(str(date))-2) * ' '}"
+#             f"| {topics}{(len(columns[4]) - len(str(topics))-1) * ' '}",
+#             fg=typer.colors.BLUE
+#         )
+#     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
 
 if __name__ == "__main__":

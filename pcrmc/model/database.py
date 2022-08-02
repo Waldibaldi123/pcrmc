@@ -4,8 +4,8 @@
 import configparser
 import json
 from pathlib import Path
-from typing import Any, NamedTuple
-from pcrmc import DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR,\
+from typing import Any, List, NamedTuple
+from pcrmc import BAD_INPUT_ERROR, DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR,\
     SUCCESS, FILE_ERROR
 from pcrmc import config
 
@@ -98,8 +98,8 @@ class DatabaseHandler:
     def read(
         self,
         table: str,
-        identifier_field: str = None,
-        identifier_value: Any = None
+        filter_fields: List[str] = [],
+        filter_values: List[Any] = []
     ) -> DBResponse:
         """
         Read table entries where identifier_field == identifier_value
@@ -108,14 +108,21 @@ class DatabaseHandler:
         read_data, error = self._read(table)
         if error:
             return DBResponse(read_data, error)
+        if len(filter_fields) != len(filter_values):
+            return DBResponse(read_data, BAD_INPUT_ERROR)
 
-        if identifier_field is None or identifier_value is None:
+        if not filter_fields or not filter_values:
             return DBResponse(read_data, SUCCESS)
 
-        filtered_contacts = [c for c in read_data if
-                             identifier_field in c and
-                             c[identifier_field] == identifier_value]
-        return DBResponse(filtered_contacts, SUCCESS)
+        filtered_data = read_data
+        for idx, _ in enumerate(filter_fields):
+            filtered_data = [
+                d for d in filtered_data if
+                filter_fields[idx] in d and
+                d[filter_fields[idx]] == filter_values[idx]
+            ]
+        # TODO: On God that's a lot of updates to be done in view/controller
+        return DBResponse(filtered_data, SUCCESS)
 
     def insert(
         self,
