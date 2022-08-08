@@ -5,8 +5,8 @@ import configparser
 import json
 from pathlib import Path
 from typing import Any, List, NamedTuple
-from pcrmc import BAD_INPUT_ERROR, DB_READ_ERROR, DB_WRITE_ERROR, JSON_ERROR,\
-    SUCCESS, FILE_ERROR
+from pcrmc import BAD_INPUT_ERROR, DB_READ_ERROR, DB_WRITE_ERROR, \
+    DUPLICATE_ERROR, JSON_ERROR, NOT_FOUND_ERROR, SUCCESS, FILE_ERROR
 from pcrmc import config
 
 DEFAULT_DB_DIR_PATH = Path.home().joinpath(
@@ -95,7 +95,105 @@ class DatabaseHandler:
             return DBResponse(data, DB_WRITE_ERROR)
         return DBResponse(data, SUCCESS)
 
+    def insert(
+        self,
+        table: str,
+        data: dict
+    ) -> DBResponse:
+        """
+        Insert data into table
+        Returns inserted data
+        """
+        read_data, error = self._read(table)
+        if error:
+            return DBResponse(data, error)
+
+        data["ID"] = self._get_id_for_new_entry(table)
+        read_data.append(data)
+        _, error = self._write(table, read_data)
+        return DBResponse(data, error)
+
     def read(
+        self,
+        table: str,
+        id: int
+    ) -> DBResponse:
+        """
+        Returns row in table where ID == id
+        Returns error if multiple or no matches
+        """
+        read_data, error = self._read(table)
+        if error:
+            return DBResponse(read_data, error)
+
+        filtered_data = [row for row in read_data if row["ID"] == id]
+        if len(filtered_data) == 0:
+            return DBResponse(filtered_data, NOT_FOUND_ERROR)
+        elif len(filtered_data) > 1:
+            return DBResponse(filtered_data, DUPLICATE_ERROR)
+        return DBResponse(filtered_data, SUCCESS)
+
+    def update(
+        self,
+        table: str,
+        id: int,
+        update_field: str,
+        update_value: Any
+    ) -> DBResponse:
+        """
+        Update row in table where ID == id
+        with update_field = update_value if update_field exists
+        Returns updated entry
+        """
+        read_data, error = self._read(table)
+        if error:
+            return DBResponse(read_data, error)
+
+        updated_entries = []
+        for row in read_data:
+            if (row["ID"] == id):
+                if update_field in row:
+                    row[update_field] = update_value
+                    updated_entries.append(row)
+
+        if len(updated_entries) == 0:
+            return DBResponse(updated_entries, NOT_FOUND_ERROR)
+        elif len(updated_entries) > 1:
+            return DBResponse(updated_entries, DUPLICATE_ERROR)
+
+        _, error = self._write(table, read_data)
+        return DBResponse(updated_entries, error)
+
+    def delete(
+        self,
+        table: str,
+        id: int
+    ) -> DBResponse:
+        """
+        Delete row in table where ID == id
+        Returns deteleted row
+        """
+        read_data, error = self._read(table)
+        if error:
+            return DBResponse(read_data, error)
+
+        keep_rows = []
+        delete_rows = []
+        for row in read_data:
+            if (row["ID"] == id):
+                delete_rows.append(row)
+            else:
+                keep_rows.append(row)
+
+        if len(delete_rows) == 0:
+            return DBResponse(delete_rows, NOT_FOUND_ERROR)
+        elif len(delete_rows) > 1:
+            return DBResponse(delete_rows, DUPLICATE_ERROR)
+
+        _, error = self._write(table, keep_rows)
+        return DBResponse(delete_rows, SUCCESS)
+
+    def filter(
         self,
         table: str,
         filter_fields: List[str] = [],
@@ -121,81 +219,6 @@ class DatabaseHandler:
                 filter_fields[idx] in d and
                 d[filter_fields[idx]] == filter_values[idx]
             ]
-        # TODO: On God that's a lot of updates to be done in view/controller
+        if len(filtered_data) == 0:
+            return DBResponse(filtered_data, NOT_FOUND_ERROR)
         return DBResponse(filtered_data, SUCCESS)
-
-    def insert(
-        self,
-        table: str,
-        data: dict
-    ) -> DBResponse:
-        """
-        Insert data into table
-        Returns inserted data
-        """
-        read_data, error = self._read(table)
-        if error:
-            return DBResponse(data, error)
-
-        data["ID"] = self._get_id_for_new_entry(table)
-        read_data.append(data)
-        _, error = self._write(table, read_data)
-        return DBResponse(data, error)
-
-    def update(
-        self,
-        table: str,
-        identifier_field: str,
-        identifier_value: Any,
-        update_field: str,
-        update_value: Any
-    ) -> DBResponse:
-        """
-        Update table entries where identifier_field == identifier_value
-        with update_field = update_value if update_field exists
-        Returns updated entries
-        """
-        read_data, error = self._read(table)
-        if error:
-            return DBResponse(read_data, error)
-
-        updated_entries = []
-        for entry in read_data:
-            if (identifier_field in entry and
-                    entry[identifier_field] == identifier_value):
-                if update_field in entry:
-                    entry[update_field] = update_value
-                    updated_entries.append(entry)
-
-        _, error = self._write(table, read_data)
-        return DBResponse(updated_entries, error)
-
-    def delete(
-        self,
-        table: str,
-        identifier_field: str = None,
-        identifier_value: Any = None
-    ) -> DBResponse:
-        """
-        Delete entries in table where identifier_name and identifier_value
-        Delete all entries in table if no identifier is given
-        Returns deteleted entries
-        """
-        read_data, error = self._read(table)
-        if error:
-            return DBResponse(read_data, error)
-
-        if identifier_field is None or identifier_value is None:
-            _, error = self._write(table, [])
-            return DBResponse(read_data, error)
-
-        # TODO: there has to be more pythonic solution than these loops
-        keep_entries = [entry for entry in read_data if
-                        (identifier_field not in entry) or
-                        (identifier_field in entry and
-                         not entry[identifier_field] == identifier_value)]
-        delete_entries = [entry for entry in read_data if
-                          identifier_field in entry and
-                          entry[identifier_field] == identifier_value]
-        _, error = self._write(table, keep_entries)
-        return DBResponse(delete_entries, SUCCESS)

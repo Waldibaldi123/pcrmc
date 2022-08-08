@@ -29,7 +29,7 @@ def add_contact(
         raise typer.Exit(1)
     else:
         typer.secho(
-            f"pcrmc: {contact['Name']} ({contact['Country']}"
+            f"Contact {contact['Name']} ({contact['Country']}"
             f" / {contact['Industry']}) was added",
             fg=typer.colors.GREEN,
         )

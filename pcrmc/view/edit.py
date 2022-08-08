@@ -11,40 +11,40 @@ app = typer.Typer()
 
 @app.command()
 def contact(
-    id: int,
+    name: List[str] = typer.Argument(None),
     field: str = typer.Option(..., "--field", "-f"),
-    value: str = typer.Option(..., "--value", "-v")
+    value: str = typer.Option(..., "--value", "-v"),
+    id: int = typer.Option(None, "--id")
 ) -> None:
     """Edit contact by id."""
-    contacter = get_contacter()
-    edited_contacts, error = contacter.edit_contact(
-        id, field, value)
-
-    if error:
+    if name:
+        name = " ".join(name)
+    if not name and not id:
         typer.secho(
-            f'edit_contact failed with "{ERRORS[error]}\n"',
-            # f'Debug: response \n"{json.dumps(response, indent=4)}"',
+            'Must give either name or id',
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
-    elif len(edited_contacts) == 0:
+    contacter = get_contacter()
+    edited_contacts, error = contacter.edit_contact(
+        name, field, value, id)
+
+    if error:
         typer.secho(
-                f'pcrmc: contact with id {id} not found '
-                f'or field  invalid\n'
-                f'(adding new fields currently disabled '
-                f'because it breaks show contact)',
-                fg=typer.colors.GREEN,
-            )
-    else:
-        # should only run once because ID is unique
-        for contact in edited_contacts:
-            typer.secho(
-                f'pcrmc: Contact {contact["Name"]} '
-                f'with id {contact["ID"]} got edited:\n'
-                f'"{field}" now has '
-                f'value "{contact[field]}"',
-                fg=typer.colors.GREEN,
-            )
+            f'edit_contact failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
+
+    # should only run once for now
+    for contact in edited_contacts:
+        typer.secho(
+            f'pcrmc: Contact {contact["Name"]} '
+            f'with id {contact["ID"]} got edited:\n'
+            f'"{field}" now has '
+            f'value "{contact[field]}"',
+            fg=typer.colors.GREEN,
+        )
 
 
 @app.command()

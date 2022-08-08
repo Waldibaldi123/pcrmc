@@ -17,10 +17,8 @@ class Contacter:
         self._db_handler = DatabaseHandler(db_path)
 
     def _get_contact_name_from_id(self, id: int) -> ContacterResponse:
-        matched_contacts, error = self._db_handler.read(
-            "contact",
-            identifier_field="ID",
-            identifier_value=id
+        matched_contacts, error = self.get_contacts(
+            id=id
         )
         if error:
             return ContacterResponse(str(), error)
@@ -31,10 +29,8 @@ class Contacter:
         return ContacterResponse(matched_contacts[0]["Name"], SUCCESS)
 
     def _get_contact_id_from_name(self, name: str) -> ContacterResponse:
-        matched_contacts, error = self._db_handler.read(
-            "contact",
-            identifier_field="Name",
-            identifier_value=name
+        matched_contacts, error = self.get_contacts(
+            name=name
         )
         if error:
             return ContacterResponse(str(), error)
@@ -107,7 +103,7 @@ class Contacter:
                 filter_fields.append(field)
                 filter_values.append(contact_filter[field])
 
-        contacts, error = self._db_handler.read(
+        contacts, error = self._db_handler.filter(
             "contact",
             filter_fields=filter_fields,
             filter_values=filter_values
@@ -137,16 +133,20 @@ class Contacter:
 
     def edit_contact(
         self,
+        name: str,
+        edit_field: str,
+        edit_value: Any,
         id: int,
-        field: str,
-        value: str
     ) -> ContacterResponse:
+        if name:
+            id, error = self._get_contact_id_from_name(name)
+            if error:
+                return ContacterResponse(id, error)
         edited_contacts, error = self._db_handler.update(
             "contact",
-            identifier_field="ID",
-            identifier_value=id,
-            update_field=field,
-            update_value=value
+            id=id,
+            update_field=edit_field,
+            update_value=edit_value
         )
         return ContacterResponse(edited_contacts, error)
 
@@ -168,8 +168,7 @@ class Contacter:
     def delete_contact(self, id: int) -> ContacterResponse:
         deleted_contacts, error = self._db_handler.delete(
             "contact",
-            identifier_field="ID",
-            identifier_value=id
+            id=id
         )
         return ContacterResponse(deleted_contacts, error)
 

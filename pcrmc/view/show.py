@@ -14,8 +14,8 @@ app = typer.Typer()
 def show_contact(
     name: List[str] = typer.Argument(None),
     country: str = typer.Option(str(), "--country", "-c"),
-    industry: str = typer.Option(str(), "--industry"),
-    id: int = typer.Option(None, "--id", "-i")
+    industry: str = typer.Option(str(), "--industry", "-i"),
+    id: int = typer.Option(None, "--id")
 ) -> None:
     if name:
         name = " ".join(name)
@@ -29,11 +29,6 @@ def show_contact(
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
-    if len(contact_list) == 0:
-        typer.secho(
-            "There are no contacts in the db", fg=typer.colors.RED
-        )
-        raise typer.Exit()
 
     # TODO: Darstellung
     typer.secho("\nContacts:\n", fg=typer.colors.BLUE, bold=True)

@@ -10,7 +10,7 @@ app = typer.Typer()
 
 
 @app.command()
-def contact(id: int):
+def contact(id: int = typer.Option(..., "--id")):
     """Delete contact by id."""
     contacter = get_contacter()
     deleted_contacts, error = contacter.delete_contact(id)
@@ -21,19 +21,14 @@ def contact(id: int):
             fg=typer.colors.RED
         )
         raise typer.Exit(1)
-    elif len(deleted_contacts) == 0:
+
+    # should only run once for now
+    for contact in deleted_contacts:
         typer.secho(
-                f'pcrmc: contact with id {id} not found',
-                fg=typer.colors.GREEN,
-            )
-    else:
-        # should only run once because ID is unique
-        for contact in deleted_contacts:
-            typer.secho(
-                f'pcrmc: Contact {contact["Name"]} '
-                f'with id {contact["ID"]} removed',
-                fg=typer.colors.GREEN,
-            )
+            f'Contact {contact["Name"]} '
+            f'with id {contact["ID"]} removed',
+            fg=typer.colors.GREEN,
+        )
 
 
 @app.command()
