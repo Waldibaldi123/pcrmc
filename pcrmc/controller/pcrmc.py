@@ -2,7 +2,7 @@
 # pcrmc/pcrmc.py
 
 from pathlib import Path
-from typing import Any, List, NamedTuple
+from typing import Any, NamedTuple
 from pcrmc import DUPLICATE_ERROR, NOT_FOUND_ERROR, SUCCESS
 from pcrmc.model.database import DatabaseHandler
 
@@ -57,28 +57,26 @@ class Contacter:
 
     def add_meeting(
         self,
-        contact_identifier: str,
+        name: str,
         title: str,
         date: str,
         loc: str,
-        topics: List[str]
+        id: int
     ) -> ContacterResponse:
-        if contact_identifier.isdigit():
-            contact_id = contact_identifier
-            contact_name, error = self._get_contact_name_from_id(contact_id)
-        else:
-            contact_name = contact_identifier
-            contact_id, error = self._get_contact_id_from_name(contact_name)
+        if name:
+            id, error = self._get_contact_id_from_name(name)
+        elif id is not None:
+            # override name with name from given id
+            name, error = self._get_contact_name_from_id(id)
         if error:
             return(str(), error)
 
         meeting = {
-            "ContactName": contact_name,
-            "ContactID": contact_id,
+            "ContactName": name,
+            "ContactID": id,
             "Title": title,
             "Date": date,
-            "Loc": loc,
-            "Topics": topics
+            "Loc": loc
         }
         inserted_meeting, error = self._db_handler.insert("meeting", meeting)
         return ContacterResponse(inserted_meeting, error)
@@ -111,37 +109,42 @@ class Contacter:
         return ContacterResponse(contacts, error)
 
     def get_meetings(
-            self,
-            identifier: str = None
+        self,
+        name: str = None,
+        title: str = None,
+        date: str = None,
+        loc: str = None,
+        id: int = None
     ) -> ContacterResponse:
-        # TODO: be able to filter for multiple identifiers
-        if identifier is None:
-            meetings, error = self._db_handler.read("meeting")
-        elif identifier.isdigit():
-            meetings, error = self._db_handler.read(
-                "meeting",
-                identifier_name="ID",
-                identifier_value=int(identifier)
-            )
-        else:
-            meetings, error = self._db_handler.read(
-                "meeting",
-                identifier_name="Title",
-                identifier_value=str(identifier)
-            )
+        # TODO: differentiate between meeting id and contact id
+        meeting_filter = {
+            "ContactName": name,
+            "ContactID": None,
+            "Title": title,
+            "Date": date,
+            "Loc": loc,
+            "ID": id
+        }
+        filter_fields = []
+        filter_values = []
+        for field in meeting_filter:
+            if meeting_filter[field]:
+                filter_fields.append(field)
+                filter_values.append(meeting_filter[field])
+
+        meetings, error = self._db_handler.filter(
+            "meeting",
+            filter_fields=filter_fields,
+            filter_values=filter_values
+        )
         return ContacterResponse(meetings, error)
 
     def edit_contact(
         self,
-        name: str,
-        edit_field: str,
-        edit_value: Any,
         id: int,
+        edit_field: str,
+        edit_value: Any
     ) -> ContacterResponse:
-        if name:
-            id, error = self._get_contact_id_from_name(name)
-            if error:
-                return ContacterResponse(id, error)
         edited_contacts, error = self._db_handler.update(
             "contact",
             id=id,
@@ -153,15 +156,14 @@ class Contacter:
     def edit_meeting(
         self,
         id: int,
-        field: str,
-        value: str
+        edit_field: str,
+        edit_value: Any
     ) -> ContacterResponse:
         edited_meetings, error = self._db_handler.update(
             "meeting",
-            identifier_field="ID",
-            identifier_value=id,
-            update_field=field,
-            update_value=value
+            id=id,
+            update_field=edit_field,
+            update_value=edit_value
         )
         return ContacterResponse(edited_meetings, error)
 
@@ -175,7 +177,6 @@ class Contacter:
     def delete_meeting(self, id: int) -> ContacterResponse:
         deleted_meeting, error = self._db_handler.delete(
             "meeting",
-            identifier_field="ID",
-            identifier_value=id
+            id=id
         )
         return ContacterResponse(deleted_meeting, error)

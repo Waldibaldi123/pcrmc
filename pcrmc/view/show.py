@@ -9,6 +9,9 @@ from datetime import datetime, date
 
 app = typer.Typer()
 
+# TODO: seperate ouput if only one contact or one meeting is found
+#       which shows all the details about the contact or meeting
+
 
 @app.command("contact")
 def show_contact(
@@ -81,105 +84,70 @@ def show_contact(
     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
 
-# TODO: fat todo
-# @app.command("meeting")
-# def show_meetings(
-#     identifier: List[str] = typer.Argument(None)
-# ) -> None:
+@app.command("meeting")
+def show_meetings(
+    name: List[str] = typer.Argument(None),
+    title: List[str] = typer.Option(str(), "--title", '-t'),
+    date: str = typer.Option(str(), "--date", "-d"),
+    loc: str = typer.Option(str(), "--location", "-l",),
+    id: int = typer.Option(None, "--id")
+) -> None:
+    """List meetings."""
+    if name:
+        name = "".join(name)
+    if title:
+        title = "".join(title)
 
-#     """List meetings."""
-#     if identifier:
-#         identifier = " ".join(identifier)
-#     contacter = get_contacter()
-#     meetings, error = contacter.get_meetings(identifier)
-#     if error:
-#         typer.secho(
-#             f'Listing meetings failed with "{ERRORS[error]}"',
-#             fg=typer.colors.RED
-#         )
-#         raise typer.Exit(1)
-#     if len(meetings) == 0 and identifier is None:
-#         typer.secho(
-#             "There are no meetings in the db",
-#             fg=typer.colors.RED
-#         )
-#         raise typer.Exit()
-#     elif len(meetings) == 0:
-#         typer.secho(
-#             f'There are no meetings in the db given identifer {identifier}',
-#             fg=typer.colors.RED
-#         )
-#         raise typer.Exit()
-#     contacter = get_contacter()
-#     contact_list, error = contacter.get_contacts()
+    contacter = get_contacter()
+    meetings, error = contacter.get_meetings(
+        name, title, date, loc, id)
+    if error:
+        typer.secho(
+            f'Listing contacts failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED
+        )
+        raise typer.Exit(1)
 
-#     if error:
-#         typer.secho(
-#             f'Getting contacts failed with "{ERRORS[error]}"',
-#             fg=typer.colors.RED
-#         )
-#         raise typer.Exit(1)
-#     if len(contact_list) == 0:
-#         typer.secho(
-#             "There are no contacts in the db", fg=typer.colors.RED
-#         )
-#         raise typer.Exit()
+    # TODO: Darstellung
+    typer.secho("Meetings:\n", fg=typer.colors.BLUE, bold=True)
+    max_name_length = max([len(c["ContactName"]) for c in meetings])
+    columns = (
+        "ID.  ",
+        f"| Part.  {(max_name_length-5) * ' '}",
+        "| Loc  ",
+        "| Date     "
+    )
+    headers = "".join(columns)
+    typer.secho(headers, fg=typer.colors.BLUE, bold=True)
+    typer.secho("-" * len(headers), fg=typer.colors.BLUE)
+    for meeting in meetings:
+        id = meeting["ID"]
+        part = meeting["ContactName"]
+        loc = meeting["Loc"]
+        date = meeting["Date"]
+        typer.secho(
+            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
+            f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
+            f"| {date}{(len(columns[3]) - len(str(date))-2) * ' '}",
+            fg=typer.colors.BLUE
+        )
+    typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
 
-#     meetings, error = contacter.get_meetings()
-#     if error != SUCCESS:
-#         typer.secho(
-#             f'Getting meetings failed with "{ERRORS[error]}"',
-#             fg=typer.colors.RED
-#         )
-#         raise typer.Exit()
 
-#     if len(participants) > 0:
-#         meetings = [m for m in meetings if
-#                     all([p in m["Participants"] for p in participants])
-#                     ]
+# TODO: integrate this
+# meetings = [m for m in meetings if id in m["Participants"]]
+# if len(meetings) > 0:
+#     last_meeting = (max([m["Date"] for m in meetings]))
+#     days_since_meeting = abs((date.today()-datetime.strptime(
+#         last_meeting, "%Y%m%d").date()).days)
 
-#     if date:
-#         meetings = [m for m in meetings if m["Date"] == date]
-#     if loc:
-#         meetings = [m for m in meetings if m["Loc"] == loc]
-
-#     if len(meetings) == 0:
-#         typer.secho(
-#             "No meetings found.", fg=typer.colors.RED
-#         )
-#         raise typer.Exit()
-
-#     if len(topics) > 0:
-#         meetings = [m for m in meetings if
-#                     all([t in m["Topics"] for t in topics])
-#                     ]
-#     typer.secho("Meetings:\n", fg=typer.colors.BLUE, bold=True)
-#     max_name_length = max([len(c["Participants"]) for c in meetings])
-#     columns = (
-#         "ID.  ",
-#         f"| Part.  {(max_name_length-5) * ' '}",
-#         "| Loc  ",
-#         "| Date     ",
-#         "| Topics  "
-#     )
-#     headers = "".join(columns)
-#     typer.secho(headers, fg=typer.colors.BLUE, bold=True)
-#     typer.secho("-" * len(headers), fg=typer.colors.BLUE)
-#     for meeting in meetings:
-#         id = meeting["ID"]
-#         part = meeting["Participants"]
-#         loc = meeting["Loc"]
-#         date = meeting["Date"]
-#         topics = meeting["Topics"]
-#         typer.secho(
-#             f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
-#             f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
-#             f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
-#             f"| {date}{(len(columns[3]) - len(str(date))-2) * ' '}"
-#             f"| {topics}{(len(columns[4]) - len(str(topics))-1) * ' '}",
-#             fg=typer.colors.BLUE
-#         )
-#     typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
+#     if days_since_meeting < 10:
+#         color = typer.colors.GREEN
+#     elif days_since_meeting < 20:
+#         color = typer.colors.YELLOW
+#     elif days_since_meeting < 30:
+#         color = typer.colors.RED
 
 
 if __name__ == "__main__":
