@@ -3,7 +3,7 @@
 
 from typing import List
 import typer
-from pcrmc.view.utils import get_contacter, print_error
+from pcrmc.view.utils import format_name_list, get_contacter, print_error
 from pcrmc import NO_NAME_OR_ID_ERROR
 from pcrmc.view.console import console
 
@@ -32,14 +32,19 @@ def add_contact(
         )
 
 
-# TODO: allow multiple participants
+# TODO: allow for additional IDs as well
 @app.command("meeting")
 def add_meeting(
     name: List[str] = typer.Argument(None),
-    title: List[str] = typer.Option(..., "--title", '-t', prompt="title?"),
+    title: List[str] = typer.Option(str(), "--title", '-t', prompt="title?"),
     date: str = typer.Option(str(), "--date", "-d", prompt="date?"),
     loc: List[str] = typer.Option(str(), "--location", "-l", prompt="location?"),  # noqa: E501
-    id: int = typer.Option(None, "--id")
+    id: int = typer.Option(None, "--id"),
+    additional_names: List[str] = typer.Option(
+        None, "--additional-names", "-a",
+        prompt="Additional Names (seperate with ,)?",
+        callback=format_name_list
+    )
 ) -> None:
     """Add a new meeting with a contact (name or id)."""
     if name:
@@ -50,22 +55,34 @@ def add_meeting(
         print_error(NO_NAME_OR_ID_ERROR)
 
     contacter = get_contacter()
-    meeting, error = contacter.add_meeting(
-        name=name,
-        title=title,
-        date=date,
-        loc=loc,
-        id=id
-    )
 
-    if error:
-        print_error(error)
+    additional_names.insert(0, name)
+    for idx, additional_name in enumerate(additional_names):
+        if idx != 0:
+            id = None
 
-    console.print(
-        f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
-        f'at {meeting["Loc"]} ({meeting["Date"]}) was added '
-        f'(id = {meeting["ID"]})'
-    )
+        meeting, error = contacter.add_meeting(
+            name=additional_name,
+            title=title,
+            date=date,
+            loc=loc,
+            id=id
+        )
+
+        if error:
+            try:
+                print_error(error)
+            except Exception:
+                if idx < len(additional_names) - 1:
+                    continue
+                else:
+                    raise typer.Exit(1)
+
+        console.print(
+            f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
+            f'at {meeting["Loc"]} ({meeting["Date"]}) was added '
+            f'(id = {meeting["ID"]})'
+        )
 
 
 if __name__ == "__main__":

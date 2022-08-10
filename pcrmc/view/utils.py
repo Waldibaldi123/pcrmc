@@ -7,6 +7,7 @@ from pcrmc.controller import pcrmc
 from pcrmc.model import database
 from pcrmc import ERRORS, NO_INIT_ERROR
 from pcrmc.view.console import error_console
+from typing import List
 
 
 def print_error(error: int) -> None:
@@ -24,3 +25,10 @@ def get_contacter() -> pcrmc.Contacter:
         return pcrmc.Contacter(db_path)
     else:
         print_error(NO_INIT_ERROR)
+
+
+def format_name_list(names: List[str]) -> List[str]:
+    joined_names = "".join(names)
+    split_names = joined_names.split(",")
+    stripped_names = [name.strip() for name in split_names]
+    return stripped_names
