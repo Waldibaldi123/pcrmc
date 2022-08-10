@@ -1,16 +1,106 @@
 """This module provides the show command"""
 # pcrmc/view/show.py
 
-from typing import List
+from typing import Any, List
 import typer
 from pcrmc.view.utils import get_contacter
-from pcrmc import SUCCESS, ERRORS
-from datetime import datetime, date
+from pcrmc import ERRORS
+from pcrmc.view.console import console
+from rich.table import Table
+from datetime import datetime
 
 app = typer.Typer()
 
-# TODO: seperate ouput if only one contact or one meeting is found
-#       which shows all the details about the contact or meeting
+
+def _print_contact_details(contact: Any) -> None:
+    table = Table(title=contact["Name"])
+    table.add_column("ID")
+    table.add_column("Country")
+    table.add_column("Industry")
+    table.add_row(str(contact["ID"]), contact["Country"], contact["Industry"])
+    console.line()
+    console.print(table)
+
+
+def _print_meeting_details(meeting: Any) -> None:
+    table = Table(title=meeting["Title"])
+    table.add_column("ID")
+    table.add_column("Contact")
+    table.add_column("Location")
+    table.add_column("Date")
+    table.add_row(
+        str(meeting["ID"]),
+        f'{meeting["ContactName"]} ({meeting["ContactID"]})',
+        meeting["Loc"],
+        meeting["Date"]
+    )
+    console.line()
+    console.print(table)
+
+
+def _print_contacts(contacts: List, contacts_meetings: List) -> None:
+    table = Table(title="Contacts")
+    table.add_column("<30 days", style="green")
+    table.add_column("<90 days", style="yellow")
+    table.add_column(">90 days", style="red")
+    table.add_column(">180 days", style="blue")
+    if len(contacts) == 0:
+        console.print(table)
+        return
+
+    contact_day_sub_lists = [[], [], [], []]
+    for idx, contact in enumerate(contacts):
+        if not contacts_meetings[idx]:
+            contact_day_sub_lists[3].append(contact)
+            continue
+
+        last_meeting = (max([datetime.strptime(m["Date"], "%Y-%m-%d")
+                        for m in contacts_meetings[idx]]))
+        days_since_meeting = (datetime.today() - last_meeting).days
+        if days_since_meeting < 30:
+            contact_day_sub_lists[0].append(contact)
+        elif days_since_meeting < 90:
+            contact_day_sub_lists[1].append(contact)
+        elif days_since_meeting < 180:
+            contact_day_sub_lists[2].append(contact)
+        else:
+            contact_day_sub_lists[3].append(contact)
+
+    max_len = max(len(sub_list) for sub_list in contact_day_sub_lists)
+    for sub_list in contact_day_sub_lists:
+        sub_list += [{"Name": None}] * (max_len - len(sub_list))
+
+    for idx, _ in enumerate(contact_day_sub_lists[0]):
+        table.add_row(
+            contact_day_sub_lists[0][idx]["Name"],
+            contact_day_sub_lists[1][idx]["Name"],
+            contact_day_sub_lists[2][idx]["Name"],
+            contact_day_sub_lists[3][idx]["Name"]
+        )
+
+    console.line()
+    console.print(table)
+
+
+def _print_meetings(meetings: List) -> None:
+    table = Table(title="Meetings")
+    table.add_column("ID")
+    table.add_column("Title")
+    table.add_column("ContactName")
+    table.add_column("Loc")
+    table.add_column("Date")
+
+    for meeting in meetings:
+        table.add_row(
+            str(meeting["ID"]),
+            meeting["Title"],
+            meeting["ContactName"],
+            meeting["Loc"],
+            meeting["Date"]
+        )
+
+    console.line()
+    console.print(table)
 
 
 @app.command("contact")
@@ -24,7 +114,7 @@ def show_contact(
         name = " ".join(name)
 
     contacter = get_contacter()
-    contact_list, error = contacter.get_contacts(
+    contacts, error = contacter.get_contacts(
         name, country, industry, id)
     if error:
         typer.secho(
@@ -33,55 +123,17 @@ def show_contact(
         )
         raise typer.Exit(1)
 
-    # TODO: Darstellung
-    typer.secho("\nContacts:\n", fg=typer.colors.BLUE, bold=True)
-    max_name_length = max([len(c["Name"]) for c in contact_list])
-    columns = (
-        "ID.  ",
-        f"| Name  {(max_name_length-4) * ' '}",
-        "| Country  ",
-        "| Industry  "
-    )
-    headers = "".join(columns)
-    typer.secho(headers, fg=typer.colors.BLUE, bold=True)
-    typer.secho("-" * len(headers), fg=typer.colors.BLUE)
-    for contact in contact_list:
-        id = contact["ID"]
-        name = contact["Name"]
-        country = contact["Country"]
-        industry = contact["Industry"]
-
-        color = typer.colors.BLUE
-        # TODO
-        # meetings, error = contacter.get_meetings()
-        meetings, error = ([], SUCCESS)
-        if error != SUCCESS:
-            typer.secho(
-                "Error reading meetings", fg=typer.colors.RED
-            )
-            raise typer.Exit()
-
-        meetings = [m for m in meetings if id in m["Participants"]]
-        if len(meetings) > 0:
-            last_meeting = (max([m["Date"] for m in meetings]))
-            days_since_meeting = abs((date.today()-datetime.strptime(
-                last_meeting, "%Y%m%d").date()).days)
-
-            if days_since_meeting < 10:
-                color = typer.colors.GREEN
-            elif days_since_meeting < 20:
-                color = typer.colors.YELLOW
-            elif days_since_meeting < 30:
-                color = typer.colors.RED
-
-        typer.secho(
-            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
-            f"| {name}{(len(columns[1]) - len(str(name))-2) * ' '}"
-            f"| {country}{(len(columns[2]) - len(str(country))-2) * ' '}"
-            f"| {industry}{(len(columns[3]) - len(str(industry))-1) * ' '}",
-            fg=color,
-        )
-    typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
+    if len(contacts) == 1:
+        _print_contact_details(contacts[0])
+    else:
+        contacts_meetings = []
+        for contact in contacts:
+            meetings, error = contacter.get_meetings(contact_id=contact["ID"])
+            if error:
+                print("put error message in utils")
+                # TODO: put error message in utils
+            contacts_meetings.append(meetings)
+        _print_contacts(contacts, contacts_meetings)
 
 
 @app.command("meeting")
@@ -94,13 +146,18 @@ def show_meetings(
 ) -> None:
     """List meetings."""
     if name:
-        name = "".join(name)
-    if title:
-        title = "".join(title)
+        name = " ".join(name)
+    title = "".join(title)
 
     contacter = get_contacter()
     meetings, error = contacter.get_meetings(
-        name, title, date, loc, id)
+        name=name,
+        contact_id=None,    # TODO: give user option to ask give contact_id
+        title=title,
+        date=date,
+        loc=loc,
+        id=id
+    )
     if error:
         typer.secho(
             f'Listing contacts failed with "{ERRORS[error]}"',
@@ -108,46 +165,10 @@ def show_meetings(
         )
         raise typer.Exit(1)
 
-    # TODO: Darstellung
-    typer.secho("Meetings:\n", fg=typer.colors.BLUE, bold=True)
-    max_name_length = max([len(c["ContactName"]) for c in meetings])
-    columns = (
-        "ID.  ",
-        f"| Part.  {(max_name_length-5) * ' '}",
-        "| Loc  ",
-        "| Date     "
-    )
-    headers = "".join(columns)
-    typer.secho(headers, fg=typer.colors.BLUE, bold=True)
-    typer.secho("-" * len(headers), fg=typer.colors.BLUE)
-    for meeting in meetings:
-        id = meeting["ID"]
-        part = meeting["ContactName"]
-        loc = meeting["Loc"]
-        date = meeting["Date"]
-        typer.secho(
-            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
-            f"| {part}{(len(columns[1]) - len(str(part))-2) * ' '}"
-            f"| {loc}{(len(columns[2]) - len(str(loc))-2) * ' '}"
-            f"| {date}{(len(columns[3]) - len(str(date))-2) * ' '}",
-            fg=typer.colors.BLUE
-        )
-    typer.secho("-" * len(headers) + "\n", fg=typer.colors.BLUE)
-
-
-# TODO: integrate this
-# meetings = [m for m in meetings if id in m["Participants"]]
-# if len(meetings) > 0:
-#     last_meeting = (max([m["Date"] for m in meetings]))
-#     days_since_meeting = abs((date.today()-datetime.strptime(
-#         last_meeting, "%Y%m%d").date()).days)
-
-#     if days_since_meeting < 10:
-#         color = typer.colors.GREEN
-#     elif days_since_meeting < 20:
-#         color = typer.colors.YELLOW
-#     elif days_since_meeting < 30:
-#         color = typer.colors.RED
+    if len(meetings) == 1:
+        _print_meeting_details(meetings[0])
+    else:
+        _print_meetings(meetings)
 
 
 if __name__ == "__main__":

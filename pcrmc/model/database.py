@@ -219,6 +219,4 @@ class DatabaseHandler:
                 filter_fields[idx] in d and
                 d[filter_fields[idx]] == filter_values[idx]
             ]
-        if len(filtered_data) == 0:
-            return DBResponse(filtered_data, NOT_FOUND_ERROR)
         return DBResponse(filtered_data, SUCCESS)

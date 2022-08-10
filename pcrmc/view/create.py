@@ -41,13 +41,14 @@ def add_meeting(
     name: List[str] = typer.Argument(None),
     title: List[str] = typer.Option(..., "--title", '-t', prompt="title?"),
     date: str = typer.Option(str(), "--date", "-d", prompt="date?"),
-    loc: str = typer.Option(str(), "--location", "-l", prompt="location?"),
+    loc: List[str] = typer.Option(str(), "--location", "-l", prompt="location?"),  # noqa: E501
     id: int = typer.Option(None, "--id")
 ) -> None:
-    """Add a new meeting with a CONTACT (name or id)."""
+    """Add a new meeting with a contact (name or id)."""
     if name:
-        name = "".join(name)
+        name = " ".join(name)
     title = "".join(title)
+    loc = "".join(loc)
     if not name and id is None:
         typer.secho(
             'Must give either name or id',
@@ -73,7 +74,7 @@ def add_meeting(
 
     typer.secho(
         f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
-        f'at {loc} ({date}) was added',
+        f'at {meeting["Loc"]} ({meeting["Date"]}) was added',
         fg=typer.colors.GREEN,
     )
 

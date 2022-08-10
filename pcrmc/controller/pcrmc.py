@@ -3,8 +3,9 @@
 
 from pathlib import Path
 from typing import Any, NamedTuple
-from pcrmc import DUPLICATE_ERROR, NOT_FOUND_ERROR, SUCCESS
+from pcrmc import BAD_INPUT_ERROR, DUPLICATE_ERROR, NOT_FOUND_ERROR, SUCCESS
 from pcrmc.model.database import DatabaseHandler
+from datetime import datetime, timedelta
 
 
 class ContacterResponse(NamedTuple):
@@ -41,6 +42,20 @@ class Contacter:
             return ContacterResponse(matched_contacts, DUPLICATE_ERROR)
         return ContacterResponse(matched_contacts[0]["ID"], SUCCESS)
 
+    def _format_date(self, date: str) -> ContacterResponse:
+        if date == "today" or not date:
+            formatted_date = datetime.today().strftime('%Y-%m-%d')
+        elif date == "yesterday":
+            yesterday = datetime.today() - timedelta(1)
+            formatted_date = yesterday.strftime('%Y-%m-%d')
+        else:
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+                formatted_date = date
+            except ValueError:
+                return ContacterResponse(date, BAD_INPUT_ERROR)
+        return ContacterResponse(formatted_date, SUCCESS)
+
     def add_contact(
         self,
         name: str,
@@ -69,13 +84,17 @@ class Contacter:
             # override name with name from given id
             name, error = self._get_contact_name_from_id(id)
         if error:
-            return(str(), error)
+            return ContacterResponse(str(), error)
+
+        formatted_date, error = self._format_date(date)
+        if error:
+            return ContacterResponse(formatted_date, error)
 
         meeting = {
             "ContactName": name,
             "ContactID": id,
             "Title": title,
-            "Date": date,
+            "Date": formatted_date,
             "Loc": loc
         }
         inserted_meeting, error = self._db_handler.insert("meeting", meeting)
@@ -97,7 +116,7 @@ class Contacter:
         filter_fields = []
         filter_values = []
         for field in contact_filter:
-            if contact_filter[field]:
+            if contact_filter[field] or contact_filter[field] == 0:
                 filter_fields.append(field)
                 filter_values.append(contact_filter[field])
 
@@ -111,15 +130,16 @@ class Contacter:
     def get_meetings(
         self,
         name: str = None,
+        contact_id: int = None,
         title: str = None,
         date: str = None,
         loc: str = None,
         id: int = None
     ) -> ContacterResponse:
-        # TODO: differentiate between meeting id and contact id
+        # TODO: differentiate better between meeting id and contact id
         meeting_filter = {
             "ContactName": name,
-            "ContactID": None,
+            "ContactID": contact_id,
             "Title": title,
             "Date": date,
             "Loc": loc,
@@ -128,7 +148,7 @@ class Contacter:
         filter_fields = []
         filter_values = []
         for field in meeting_filter:
-            if meeting_filter[field]:
+            if meeting_filter[field] or meeting_filter[field] == 0:
                 filter_fields.append(field)
                 filter_values.append(meeting_filter[field])
 
@@ -159,6 +179,11 @@ class Contacter:
         edit_field: str,
         edit_value: Any
     ) -> ContacterResponse:
+        if edit_field == "Date":
+            edit_value, error = self._format_date(edit_value)
+        if error:
+            return ContacterResponse(edit_field, error)
+
         edited_meetings, error = self._db_handler.update(
             "meeting",
             id=id,
