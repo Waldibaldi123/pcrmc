@@ -14,8 +14,10 @@ __version__ = "0.1.0"
         ID_ERROR,
         NOT_FOUND_ERROR,
         DUPLICATE_ERROR,
-        BAD_INPUT_ERROR
-) = range(10)
+        BAD_INPUT_ERROR,
+        NO_INIT_ERROR,
+        NO_NAME_OR_ID_ERROR
+) = range(12)
 
 ERRORS = {
         DIR_ERROR: "config directory error",
@@ -26,5 +28,7 @@ ERRORS = {
         ID_ERROR: "id error",
         NOT_FOUND_ERROR: "not found error",
         DUPLICATE_ERROR: "duplicate error",
-        BAD_INPUT_ERROR: "bad input error"
+        BAD_INPUT_ERROR: "bad input error",
+        NO_INIT_ERROR: "config files not found, run init",
+        NO_NAME_OR_ID_ERROR: "Must give either name or id"
 }

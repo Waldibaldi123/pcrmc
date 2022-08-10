@@ -3,8 +3,7 @@
 
 from typing import Any, List
 import typer
-from pcrmc.view.utils import get_contacter
-from pcrmc import ERRORS
+from pcrmc.view.utils import get_contacter, print_error
 from pcrmc.view.console import console
 from rich.table import Table
 from datetime import datetime
@@ -117,11 +116,7 @@ def show_contact(
     contacts, error = contacter.get_contacts(
         name, country, industry, id)
     if error:
-        typer.secho(
-            f'Listing contacts failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     if len(contacts) == 1:
         _print_contact_details(contacts[0])
@@ -130,8 +125,7 @@ def show_contact(
         for contact in contacts:
             meetings, error = contacter.get_meetings(contact_id=contact["ID"])
             if error:
-                print("put error message in utils")
-                # TODO: put error message in utils
+                print_error(error)
             contacts_meetings.append(meetings)
         _print_contacts(contacts, contacts_meetings)
 
@@ -159,11 +153,7 @@ def show_meetings(
         id=id
     )
     if error:
-        typer.secho(
-            f'Listing contacts failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     if len(meetings) == 1:
         _print_meeting_details(meetings[0])

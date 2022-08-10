@@ -2,8 +2,8 @@
 # pcrmc/view/delete.py
 
 import typer
-from pcrmc.view.utils import get_contacter
-from pcrmc import ERRORS
+from pcrmc.view.utils import get_contacter, print_error
+from pcrmc.view.console import console
 
 app = typer.Typer()
 
@@ -15,18 +15,13 @@ def delete_contact(id: int = typer.Option(..., "--id")):
     deleted_contacts, error = contacter.delete_contact(id)
 
     if error:
-        typer.secho(
-            f'delete_contact failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     # should only run once for now
     for contact in deleted_contacts:
-        typer.secho(
+        console.print(
             f'Contact {contact["Name"]} '
-            f'with id {contact["ID"]} removed',
-            fg=typer.colors.GREEN,
+            f'with id {contact["ID"]} removed'
         )
 
 
@@ -37,18 +32,13 @@ def delete_meeting(id: int = typer.Option(..., "--id")):
     deleted_meetings, error = contacter.delete_meeting(id)
 
     if error:
-        typer.secho(
-            f'delete_meeting failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     # should only run once for now
     for meeting in deleted_meetings:
-        typer.secho(
+        console.print(
             f'Meeting with {meeting["ContactName"]} '
-            f'with id {meeting["ID"]} removed',
-            fg=typer.colors.GREEN,
+            f'with id {meeting["ID"]} removed'
         )
 
 

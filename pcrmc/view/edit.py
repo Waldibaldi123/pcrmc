@@ -2,8 +2,8 @@
 # pcrmc/view/edit.py
 
 import typer
-from pcrmc.view.utils import get_contacter
-from pcrmc import ERRORS
+from pcrmc.view.utils import get_contacter, print_error
+from pcrmc.view.console import console
 
 app = typer.Typer()
 
@@ -20,20 +20,15 @@ def edit_contact(
         id, field, value)
 
     if error:
-        typer.secho(
-            f'edit_contact failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     # should only run once for now
     for contact in edited_contacts:
-        typer.secho(
+        console.print(
             f'Contact {contact["Name"]} '
             f'with id {contact["ID"]} got edited:\n'
             f'"{field}" now has '
-            f'value "{contact[field]}"',
-            fg=typer.colors.GREEN,
+            f'value "{contact[field]}"'
         )
 
 
@@ -49,21 +44,16 @@ def edit_meeting(
         id, field, value)
 
     if error:
-        typer.secho(
-            f'edit_meeting failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
     # should only run once for now
     for meeting in edited_meetings:
-        typer.secho(
+        console.print(
             f'Meeting with {meeting["ContactName"]} '
             f'and title {meeting["Title"]} '
             f'with id {meeting["ID"]} got edited:\n'
             f'"{field}" now has '
-            f'value "{meeting[field]}"',
-            fg=typer.colors.GREEN,
+            f'value "{meeting[field]}"'
         )
 
 

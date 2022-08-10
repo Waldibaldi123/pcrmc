@@ -3,8 +3,9 @@
 
 from typing import List
 import typer
-from pcrmc.view.utils import get_contacter
-from pcrmc import ERRORS
+from pcrmc.view.utils import get_contacter, print_error
+from pcrmc import NO_NAME_OR_ID_ERROR
+from pcrmc.view.console import console
 
 app = typer.Typer()
 
@@ -22,16 +23,11 @@ def add_contact(
     contact, error = contacter.add_contact(name, country, industry)
 
     if error:
-        typer.secho(
-            f'Adding Contact failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
     else:
-        typer.secho(
+        console.print(
             f"Contact {contact['Name']} ({contact['Country']}"
-            f" / {contact['Industry']}) was added",
-            fg=typer.colors.GREEN,
+            f" / {contact['Industry']}) was added"
         )
 
 
@@ -50,11 +46,7 @@ def add_meeting(
     title = "".join(title)
     loc = "".join(loc)
     if not name and id is None:
-        typer.secho(
-            'Must give either name or id',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(NO_NAME_OR_ID_ERROR)
 
     contacter = get_contacter()
     meeting, error = contacter.add_meeting(
@@ -66,16 +58,11 @@ def add_meeting(
     )
 
     if error:
-        typer.secho(
-            f'Adding Meeting failed with "{ERRORS[error]}"',
-            fg=typer.colors.RED
-        )
-        raise typer.Exit(1)
+        print_error(error)
 
-    typer.secho(
+    console.print(
         f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
-        f'at {meeting["Loc"]} ({meeting["Date"]}) was added',
-        fg=typer.colors.GREEN,
+        f'at {meeting["Loc"]} ({meeting["Date"]}) was added'
     )
 
 
