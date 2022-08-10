@@ -67,15 +67,19 @@ def _print_contacts(contacts: List, contacts_meetings: List) -> None:
 
     max_len = max(len(sub_list) for sub_list in contact_day_sub_lists)
     for sub_list in contact_day_sub_lists:
-        sub_list += [{"Name": None}] * (max_len - len(sub_list))
+        sub_list += [{"Name": None, "ID": None}] * (max_len - len(sub_list))
 
-    for idx, _ in enumerate(contact_day_sub_lists[0]):
-        table.add_row(
-            contact_day_sub_lists[0][idx]["Name"],
-            contact_day_sub_lists[1][idx]["Name"],
-            contact_day_sub_lists[2][idx]["Name"],
-            contact_day_sub_lists[3][idx]["Name"]
-        )
+    for sub_idx, _ in enumerate(contact_day_sub_lists[0]):
+        row = []
+        for idx, _ in enumerate(contact_day_sub_lists):
+            if contact_day_sub_lists[idx][sub_idx]["ID"] is None:
+                row.append(None)
+            else:
+                row.append(
+                    f'({contact_day_sub_lists[idx][sub_idx]["ID"]}) '
+                    f'{contact_day_sub_lists[idx][sub_idx]["Name"]}'
+                )
+        table.add_row(*row)
 
     console.line()
     console.print(table)

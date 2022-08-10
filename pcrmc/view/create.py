@@ -13,8 +13,8 @@ app = typer.Typer()
 @app.command("contact")
 def add_contact(
         name_list: List[str] = typer.Argument(...),
-        country: str = typer.Option(str(), "--country", "-c"),
-        industry: str = typer.Option(str(), "--industry", "-i")
+        country: str = typer.Option(str(), "--country", "-c", prompt="Country?"),  # noqa: E501
+        industry: str = typer.Option(str(), "--industry", "-i", prompt="Industry?")  # noqa: E501
 ) -> None:
     """Add a new contact with a NAME."""
     name = " ".join(name_list)
@@ -26,8 +26,9 @@ def add_contact(
         print_error(error)
     else:
         console.print(
-            f"Contact {contact['Name']} ({contact['Country']}"
-            f" / {contact['Industry']}) was added"
+            f'Contact {contact["Name"]} ({contact["Country"]}'
+            f' / {contact["Industry"]}) was added '
+            f'(id = {contact["ID"]})'
         )
 
 
@@ -62,7 +63,8 @@ def add_meeting(
 
     console.print(
         f'Meeting "{meeting["Title"]}" with {meeting["ContactName"]} '
-        f'at {meeting["Loc"]} ({meeting["Date"]}) was added'
+        f'at {meeting["Loc"]} ({meeting["Date"]}) was added '
+        f'(id = {meeting["ID"]})'
     )
 
 
