@@ -8,6 +8,22 @@ from pcrmc.model import database
 from pcrmc import ERRORS, NO_INIT_ERROR
 from pcrmc.view.console import error_console
 from typing import List
+import os
+import tempfile
+import subprocess
+
+
+EDITOR = os.environ.get('EDITOR', 'vim')
+
+
+def launch_editor(input: str = str()) -> str:
+    with tempfile.NamedTemporaryFile(mode='r+') as tmpfile:
+        if input:
+            tmpfile.write(input)
+            tmpfile.flush()
+        subprocess.check_call([EDITOR, '+set backupcopy=yes', tmpfile.name])
+        tmpfile.seek(0)
+        return tmpfile.read().strip()
 
 
 def print_error(error: int) -> None:

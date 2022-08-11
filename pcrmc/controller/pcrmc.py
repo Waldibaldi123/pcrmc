@@ -76,7 +76,8 @@ class Contacter:
         title: str,
         date: str,
         loc: str,
-        id: int
+        id: int,
+        desc: str
     ) -> ContacterResponse:
         if name:
             id, error = self._get_contact_id_from_name(name)
@@ -95,7 +96,8 @@ class Contacter:
             "ContactID": id,
             "Title": title,
             "Date": formatted_date,
-            "Loc": loc
+            "Loc": loc,
+            "Description": desc
         }
         inserted_meeting, error = self._db_handler.insert("meeting", meeting)
         return ContacterResponse(inserted_meeting, error)

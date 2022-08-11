@@ -6,6 +6,7 @@ import typer
 from pcrmc.view.utils import format_argument_list, get_contacter, print_error
 from pcrmc.view.console import console
 from rich.table import Table
+from rich.panel import Panel
 from datetime import datetime
 
 app = typer.Typer()
@@ -22,19 +23,18 @@ def _print_contact_details(contact: Any) -> None:
 
 
 def _print_meeting_details(meeting: Any) -> None:
-    table = Table(title=meeting["Title"])
-    table.add_column("ID")
-    table.add_column("Contact")
-    table.add_column("Location")
-    table.add_column("Date")
-    table.add_row(
-        str(meeting["ID"]),
-        f'{meeting["ContactName"]} ({meeting["ContactID"]})',
-        meeting["Loc"],
-        meeting["Date"]
+    meeting_details = (
+        f'Title:    {meeting["Title"]}\n'
+        f'Contact:  {meeting["ContactName"]} (id = {meeting["ContactID"]})\n'
+        f'Date:     {meeting["Date"]}\n'
+        f'Location: {meeting["Loc"]}\n\n'
+        f'Description:\n'
+        f'{meeting["Description"]}'
     )
+    panel = Panel(meeting_details, title=f'Meeting {meeting["ID"]}')
+
     console.line()
-    console.print(table)
+    console.print(panel)
 
 
 def _print_contacts(contacts: List, contacts_meetings: List) -> None:

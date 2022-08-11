@@ -5,7 +5,7 @@ from typing import List
 import typer
 from pcrmc.view.utils import (
     format_argument_list, format_name_list,
-    get_contacter, print_error)
+    get_contacter, launch_editor, print_error)
 from pcrmc import NO_NAME_OR_ID_ERROR
 from pcrmc.view.console import console
 
@@ -65,6 +65,8 @@ def add_meeting(
     if not name and id is None:
         print_error(NO_NAME_OR_ID_ERROR)
 
+    desc = launch_editor()
+
     contacter = get_contacter()
     additional_names.insert(0, name)
     for idx, additional_name in enumerate(additional_names):
@@ -76,7 +78,8 @@ def add_meeting(
             title=title,
             date=date,
             loc=loc,
-            id=id
+            id=id,
+            desc=desc
         )
 
         if error:
