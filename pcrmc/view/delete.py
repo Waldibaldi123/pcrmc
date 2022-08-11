@@ -9,7 +9,7 @@ app = typer.Typer()
 
 
 @app.command("contact")
-def delete_contact(id: int = typer.Option(..., "--id")):
+def delete_contact(id: int = typer.Option(..., "--id", prompt="Id?")):
     """Delete contact by id."""
     contacter = get_contacter()
     deleted_contacts, error = contacter.delete_contact(id)
@@ -26,7 +26,7 @@ def delete_contact(id: int = typer.Option(..., "--id")):
 
 
 @app.command("meeting")
-def delete_meeting(id: int = typer.Option(..., "--id")):
+def delete_meeting(id: int = typer.Option(..., "--id", prompt="Id?")):
     """Delete meeting by id."""
     contacter = get_contacter()
     deleted_meetings, error = contacter.delete_meeting(id)

@@ -10,9 +10,9 @@ app = typer.Typer()
 
 @app.command("contact")
 def edit_contact(
-    id: int = typer.Option(..., "--id"),
-    field: str = typer.Option(..., "--field", "-f"),
-    value: str = typer.Option(..., "--value", "-v"),
+    id: int = typer.Option(..., "--id", prompt="Id?"),
+    field: str = typer.Option(..., "--field", "-f", prompt="Field?"),
+    value: str = typer.Option(..., "--value", "-v", prompt="Value?")
 ) -> None:
     """Edit contact by id."""
     contacter = get_contacter()
@@ -34,9 +34,9 @@ def edit_contact(
 
 @app.command("meeting")
 def edit_meeting(
-    id: int = typer.Option(None, "--id"),
-    field: str = typer.Option(..., "--field", "-f"),
-    value: str = typer.Option(..., "--value", "-v")
+    id: int = typer.Option(..., "--id", prompt="Id?"),
+    field: str = typer.Option(..., "--field", "-f", prompt="Field?"),
+    value: str = typer.Option(..., "--value", "-v", prompt="Value?")
 ) -> None:
     """Edit meeting by id."""
     contacter = get_contacter()

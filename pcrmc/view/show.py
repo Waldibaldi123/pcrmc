@@ -3,7 +3,7 @@
 
 from typing import Any, List
 import typer
-from pcrmc.view.utils import get_contacter, print_error
+from pcrmc.view.utils import format_argument_list, get_contacter, print_error
 from pcrmc.view.console import console
 from rich.table import Table
 from datetime import datetime
@@ -108,14 +108,11 @@ def _print_meetings(meetings: List) -> None:
 
 @app.command("contact")
 def show_contact(
-    name: List[str] = typer.Argument(None),
+    name: List[str] = typer.Argument(None, callback=format_argument_list),
     country: str = typer.Option(str(), "--country", "-c"),
     industry: str = typer.Option(str(), "--industry", "-i"),
     id: int = typer.Option(None, "--id")
 ) -> None:
-    if name:
-        name = " ".join(name)
-
     contacter = get_contacter()
     contacts, error = contacter.get_contacts(
         name, country, industry, id)
@@ -136,17 +133,13 @@ def show_contact(
 
 @app.command("meeting")
 def show_meetings(
-    name: List[str] = typer.Argument(None),
-    title: List[str] = typer.Option(str(), "--title", '-t'),
+    name: List[str] = typer.Argument(None, callback=format_argument_list),
+    title: str = typer.Option(str(), "--title", '-t'),
     date: str = typer.Option(str(), "--date", "-d"),
     loc: str = typer.Option(str(), "--location", "-l",),
     id: int = typer.Option(None, "--id")
 ) -> None:
     """List meetings."""
-    if name:
-        name = " ".join(name)
-    title = "".join(title)
-
     contacter = get_contacter()
     meetings, error = contacter.get_meetings(
         name=name,
